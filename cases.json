@@ -1,0 +1,226 @@
+{
+  "philly": {
+    "S0": {
+      "text": "都市部で飲料税を導入したが、健康改善と税収のどちらを優先するかで議論が割れている。",
+      "notes": [
+        "市内販売減と越境購買の両面を見たい"
+      ],
+      "research_question": "飲料税導入は、価格転嫁・市内販売・越境購買を通じて市場全体の課税飲料消費をどの程度減らすか。",
+      "scope": {
+        "population": "課税対象地域の飲料購入者",
+        "intervention_or_exposure": "砂糖飲料税の導入",
+        "comparison": "導入前後、および市内と境界外",
+        "geography": "Philadelphia市内と近接境界外",
+        "time_window": "導入前後の短中期",
+        "outcome_domain": "販売量・価格転嫁・越境購買"
+      }
+    },
+    "S2_EVID": {
+      "findings": [
+        {
+          "id": "E1",
+          "what": "価格転嫁",
+          "direction": "増加",
+          "magnitude": "高い",
+          "group": "市内課税飲料",
+          "comparison": "課税前後",
+          "value": "pass-through 約97%",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E2",
+          "what": "市内販売量",
+          "direction": "減少",
+          "magnitude": "大きい",
+          "group": "市内店舗と境界外店舗",
+          "comparison": "導入市内 vs 導入市外",
+          "value": "市内販売 約-46%",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E3",
+          "what": "越境購買を含む純効果",
+          "direction": "減少",
+          "magnitude": "市内のみより縮小",
+          "group": "市内消費者全体",
+          "comparison": "越境調整前後",
+          "value": "純効果 約-22%",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E4",
+          "what": "境界距離・所得による異質性",
+          "direction": "異質",
+          "magnitude": "回避可能性に格差",
+          "group": "所得階層",
+          "comparison": "境界近接世帯 vs 非近接世帯",
+          "value": "低所得層で越境回避が困難",
+          "uncertainty": "定性的評価を含む"
+        }
+      ],
+      "not_observed": [
+        "長期健康アウトカムは未観測",
+        "家計内の完全な代替行動は未観測"
+      ],
+      "notes": [
+        "市内販売データと境界外販売データを併用"
+      ]
+    },
+    "S3_EVID": {
+      "text": "追加検証では、境界近接性の高い地区で越境購買増が大きく、非近接地区では増加が小さかった。",
+      "notes": [
+        "空間的異質性の追加結果"
+      ]
+    }
+  },
+  "chernobyl": {
+    "S0": {
+      "text": "低線量の胎内曝露が長期学業成果に影響するかが争点。",
+      "notes": [
+        "妊娠週数別の感受性を確認したい"
+      ],
+      "research_question": "低線量の胎内放射線曝露は学業成果を低下させるか、また妊娠週数によって影響は異なるか。",
+      "scope": {
+        "population": "事故時胎内コホートと近接比較コホート",
+        "intervention_or_exposure": "事故由来の低線量放射線曝露",
+        "comparison": "被曝強度地域差と受胎時期差",
+        "geography": "曝露強度の異なる地域",
+        "time_window": "胎内期から学齢期アウトカム時点",
+        "outcome_domain": "学業資格・学業成績"
+      }
+    },
+    "S2_EVID": {
+      "findings": [
+        {
+          "id": "E1",
+          "what": "進学資格率（高曝露8自治体）",
+          "direction": "低下",
+          "magnitude": "中程度",
+          "group": "高曝露地域の事故時胎内コホート",
+          "comparison": "事故時胎内コホート vs 近接コホート",
+          "value": "約-3.6pp",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E2",
+          "what": "進学資格率（広域サンプル）",
+          "direction": "低下",
+          "magnitude": "小から中",
+          "group": "広域曝露地域の胎内コホート",
+          "comparison": "事故時胎内コホート vs 近接コホート",
+          "value": "約-1.8pp",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E3",
+          "what": "妊娠週数別の異質性",
+          "direction": "8-25週で強い",
+          "magnitude": "他週より大きい",
+          "group": "胎内曝露コホート",
+          "comparison": "妊娠週数ブロック間比較",
+          "value": "8-25週で効果最大",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E4",
+          "what": "用量反応",
+          "direction": "単調",
+          "magnitude": "低曝露 < 中曝露 < 高曝露",
+          "group": "地域曝露階層",
+          "comparison": "曝露強度階層間比較",
+          "value": "高曝露ほど悪化",
+          "uncertainty": "推定誤差あり"
+        }
+      ],
+      "not_observed": [
+        "遺伝要因の直接指標は未観測",
+        "長期就業アウトカムは未観測",
+        "全ての家庭背景差の完全制御は不可"
+      ],
+      "notes": [
+        "事前トレンドとプラセボは別途確認対象"
+      ]
+    },
+    "S3_EVID": {
+      "text": "追加検証では兄弟固定効果を入れても主効果の方向は維持され、効果量はやや縮小した。",
+      "notes": [
+        "家庭固定要因に対する感度確認"
+      ]
+    }
+  },
+  "weber": {
+    "S0": {
+      "text": "宗派差の経済成果は労働倫理か人的資本か、メカニズムの切り分けが論点。",
+      "notes": [
+        "媒介の有無を重視"
+      ],
+      "research_question": "宗派差と経済成果の関連は、労働倫理の直接効果か、識字率を通じた人的資本媒介か。",
+      "scope": {
+        "population": "歴史的ドイツ地域単位",
+        "intervention_or_exposure": "プロテスタント比率（宗派構成）",
+        "comparison": "宗派構成差と識字率統制前後",
+        "geography": "歴史的ドイツ各郡",
+        "time_window": "歴史断面",
+        "outcome_domain": "所得税基盤・雇用・人的資本関連"
+      }
+    },
+    "S2_EVID": {
+      "findings": [
+        {
+          "id": "E1",
+          "what": "第一段階の強さ",
+          "direction": "十分強い",
+          "magnitude": "強い",
+          "group": "IV推定全体",
+          "comparison": "操作変数の第一段階",
+          "value": "F統計量 74.19",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E2A",
+          "what": "経済成果の宗派差（統制前）",
+          "direction": "差あり",
+          "magnitude": "中から大",
+          "group": "経済アウトカム回帰",
+          "comparison": "カトリック多数郡 vs プロテスタント多数郡",
+          "value": "所得税基盤差 約0.59マルク、非農業雇用差 約8.2pp、教員所得差 約10.5%",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E2B",
+          "what": "識字率統制後の宗派係数",
+          "direction": "縮小",
+          "magnitude": "多くの仕様で小さい/非有意",
+          "group": "経済アウトカム回帰",
+          "comparison": "識字率統制前後",
+          "value": "主要係数が大きく減衰",
+          "uncertainty": "仕様依存性あり"
+        },
+        {
+          "id": "E3",
+          "what": "頑健性検証",
+          "direction": "主方向維持",
+          "magnitude": "限定的に変動",
+          "group": "代替仕様",
+          "comparison": "仕様変更間比較",
+          "value": "主結果の方向は維持",
+          "uncertainty": "排他制約の完全検証は不可"
+        }
+      ],
+      "not_observed": [
+        "労働倫理の直接観測指標は限定的",
+        "排他制約の完全検証は不可",
+        "機序の完全分離は不可"
+      ],
+      "notes": [
+        "操作変数の妥当性は部分的にしか検証できない"
+      ]
+    },
+    "S3_EVID": {
+      "text": "追加検証では、識字率関連の代理変数を変えても宗派の直接係数は小さいままだった。",
+      "notes": [
+        "媒介経路の頑健性確認"
+      ]
+    }
+  }
+}

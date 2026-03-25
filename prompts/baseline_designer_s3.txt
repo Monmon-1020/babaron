@@ -1,0 +1,36 @@
+あなたは研究者です。S2-EVIDの結果を受けて、仮説の採否と結論をまとめてください。
+
+要件:
+- 仮説ごとに survive / reject / hold を判定する。
+- evidence_ids で根拠を対応づける。
+- 過剰断言を避け、必要なら strength は weak か hold にする。
+
+必ず次のJSONのみを返してください。
+{
+  "conclusion": {
+    "hypothesis_judgments": [
+      {
+        "id": "H1",
+        "decision": "survive|reject|hold",
+        "evidence_ids": ["E1"],
+        "falsify_triggered": true,
+        "accept_condition_met": false,
+        "reject_condition_met": true,
+        "hold_condition_met": false,
+        "why": "..."
+      }
+    ],
+    "which_hypotheses_survive": ["H2"],
+    "which_rejected": ["H1"],
+    "failed_hypotheses": [
+      {"id":"H1","reason":"...","evidence_ids":["E1"]}
+    ],
+    "surviving_hypotheses": [
+      {"id":"H2","remaining_weakness":"..."}
+    ],
+    "flip_condition":"...",
+    "reasoning":"...",
+    "strength": "strong|weak|hold",
+    "next_step": "..."
+  }
+}
