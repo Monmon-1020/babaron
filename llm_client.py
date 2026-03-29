@@ -54,10 +54,16 @@ class LLMClient:
             f"{json.dumps(payload, ensure_ascii=False)}"
         )
 
+        # gpt-5.x uses max_completion_tokens; older models use max_tokens
+        token_param = (
+            {"max_completion_tokens": 4096}
+            if self.model.startswith("gpt-5") or self.model.startswith("o")
+            else {"max_tokens": 2000}
+        )
         response = self._client.chat.completions.create(
             model=self.model,
             temperature=self.temperature,
-            max_tokens=2000,
+            **token_param,
             messages=[
                 {
                     "role": "system",
