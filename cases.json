@@ -1,87 +1,123 @@
 {
   "web_browsing_mood": {
     "S0": {
-      "text": "人々は1日平均6.5時間をオンラインで過ごすが、ウェブ閲覧の感情的価値（valence）がメンタルヘルスに与える因果的影響は明らかでない。閲覧パターンが気分を反映するだけでなく、形成するかどうかを検証する必要がある。",
-      "research_question": "ウェブ閲覧で接触する情報の感情的価値（valence）は気分およびメンタルヘルスと双方向の因果関係を持つか。また、閲覧パターンへの介入により気分を改善できるか。",
-      "estimand": "ウェブ閲覧コンテンツの感情的価値（ネガティブ vs 中立）が気分指標に与える平均処置効果（ATE）、および気分状態がその後の閲覧valenceに与える効果。",
+      "text": "人々は1日平均6.5時間をオンラインで過ごし、その多くが情報探索に費やされる。自発的なウェブ閲覧で接触する情報の感情的特性（valence）がメンタルヘルスを反映し、かつ形成するかどうかは未解明である。",
+      "research_question": "自発的ウェブ閲覧で接触する情報の感情的価値（valence）は気分およびメンタルヘルスと双方向の因果関係を持つか。また、閲覧パターンへの介入により気分を改善できるか。",
+      "estimand": "ウェブ閲覧コンテンツの感情的価値（ネガティブ vs 中立）が気分指標に与える平均処置効果（ATE）、および気分状態がその後の閲覧valence選択に与える効果。",
       "scope": {
-        "population": "オンライン・プラットフォーム（Prolific）から募集した成人参加者（4研究合計 n=1,145）",
-        "intervention_or_exposure": "ウェブ閲覧コンテンツの感情的価値（Study 1-2: 自然観察、Study 3: 実験操作、Study 4: ラベル介入）",
-        "comparison": "Study 1-2: 閲覧valenceの個人差、Study 3: ネガティブ条件 vs 中立条件、Study 4: ラベルあり vs ラベルなし",
-        "geography": "オンライン参加者（主に英語圏）",
-        "time_window": "各セッション内の短期効果",
-        "outcome_domain": "気分（VAS尺度）、メンタルヘルス症状（PHQ, GAD等）"
+        "population": "Prolificプラットフォームから募集した英米の成人参加者（4研究合計 n=1,145）",
+        "intervention_or_exposure": "ウェブ閲覧コンテンツの感情的価値（Study 1-2: 自然観察、Study 3: ランダム割付による実験操作、Study 4: 感情ラベル介入）",
+        "comparison": "Study 1-2: 閲覧valenceの個人内・個人間変動、Study 3: ネガティブ条件(n=55) vs 中立条件(n=47)、Study 4a: ラベルあり(n=55) vs なし(n=54)、Study 4b: ラベル介入(n=200)",
+        "geography": "英国・米国のオンライン参加者",
+        "time_window": "各セッション内の短期効果（Study 1: 5日間、Study 2: 1日間、Study 3-4: 単一セッション）",
+        "outcome_domain": "気分（VAS/happiness scale）、精神病理症状（anxious-depression, social-withdrawal, compulsive-behaviour）"
       },
       "primary_outcomes": [
-        "気分スコア（Visual Analogue Scale）",
-        "閲覧コンテンツの感情的価値（NLP定量化）"
+        "気分スコア（very unhappy〜very happy連続尺度）",
+        "閲覧コンテンツの感情的価値（NRC VAD lexiconによるネガティブ/ポジティブvalenceスコア）"
       ],
       "secondary_outcomes": [
-        "メンタルヘルス症状スコア（PHQ, GAD）",
-        "ネガティブコンテンツへのクリック率"
+        "精神病理3次元スコア（anxious-depression, social-withdrawal, compulsive-behaviour）",
+        "ネガティブ/ポジティブ/中立ウェブページの選択数（Study 4）"
       ],
       "claim_boundary": {
-        "generalizability": "オンライン募集の成人サンプルに限定。臨床集団への一般化は検証されていない",
-        "mechanism": "閲覧valenceと気分の双方向関係を示すが、神経メカニズムの特定は範囲外",
-        "temporal": "セッション内の短期効果のみ。長期的なメンタルヘルスへの累積効果は未検証"
+        "generalizability": "Prolific募集の英米成人サンプルに限定。臨床集団・他文化圏への一般化は未検証",
+        "mechanism": "閲覧valenceと気分の双方向関係を示すが、媒介メカニズム（注意・覚醒等）の特定は範囲外",
+        "temporal": "セッション内の短期効果のみ。長期的なメンタルヘルスへの累積効果は未検証",
+        "measurement": "ネガティブvalenceと精神病理の関連は一貫するが、ポジティブvalenceとの関連は一貫しない"
       },
       "notes": [
-        "4つのStudyで段階的に因果関係を検証する構成",
-        "NLPによるvalence定量化にNRC VAD lexicon、Hu-Liu Opinion lexicon、DistilBERTを使用"
+        "NLP指標3種（NRC VAD lexicon, Hu-Liu Opinion lexicon, DistilBERT）でvalence測定。ICC=0.8-0.95で高い一致",
+        "NRC lexiconが人間評定と最も一致したため主分析に使用",
+        "参加者は閲覧履歴の提出を知っていたため、行動修正バイアスの可能性あり（著者はこれにより効果が過小推定と議論）"
       ]
     },
     "S2_EVID": {
       "findings": [
         {
           "id": "E1",
-          "what": "閲覧valenceとメンタルヘルスの相関（Study 1-2: 観察）",
-          "direction": "負の相関",
-          "magnitude": "中程度",
+          "what": "ネガティブ閲覧valenceと精神病理症状の相関（Study 1-2: 観察）",
+          "direction": "正の相関（ネガティブ閲覧が多いほど精神病理が高い）",
+          "magnitude": "小から中",
           "group": "自由閲覧参加者",
-          "comparison": "閲覧valenceの個人差とメンタルヘルス指標",
-          "value": "よりネガティブな閲覧パターンが悪いメンタルヘルスと関連",
-          "uncertainty": "観察データのため因果方向は未確定"
+          "comparison": "個人内のネガティブvalenceスコアと精神病理3次元スコアのANOVA",
+          "value": "Study 1: F(1,282)=4.815, P=0.029, η²p=0.017; β=0.091±0.042, r=0.127。Study 2: F(1,442)=8.303, P=0.004, η²p=0.018; β=0.099±0.034, r=0.138",
+          "uncertainty": "観察データのため因果方向は未確定。ポジティブvalenceでは有意な主効果なし（Study 1: P=0.920）"
         },
         {
           "id": "E2",
-          "what": "コンテンツ操作による気分への因果効果（Study 3: 実験）",
-          "direction": "悪化",
-          "magnitude": "中から大（偏η²=0.151）",
-          "group": "ネガティブ条件群 vs 中立条件群",
-          "comparison": "ランダム割当による条件間比較",
-          "value": "ネガティブ条件群で有意に低い気分スコア、偏η²=0.151",
-          "uncertainty": "短期効果のみ測定"
+          "what": "事前気分から閲覧valenceへの予測（Study 1-2: 観察・双方向性の片方）",
+          "direction": "事前気分が良いほどネガティブ閲覧が少ない",
+          "magnitude": "小（有意）",
+          "group": "気分測定ありの参加者",
+          "comparison": "事前気分によるネガティブvalence予測の線形回帰",
+          "value": "Study 1: β=−0.082±0.041, t(380.29)=−1.981, P=0.048。Study 2: β=−0.097±0.049, t(396)=−1.974, P=0.049, r=−0.099",
+          "uncertainty": "ポジティブvalenceでは有意な関連なし"
         },
         {
           "id": "E3",
-          "what": "気分から閲覧valenceへの逆方向因果（Study 3: 実験）",
-          "direction": "ネガティブ方向へシフト",
-          "magnitude": "有意",
-          "group": "ネガティブ条件群の自由閲覧フェーズ",
-          "comparison": "操作後の自由閲覧で条件間比較",
-          "value": "ネガティブ条件群がより多くのネガティブコンテンツを選択",
-          "uncertainty": "効果の持続時間は未検証"
+          "what": "閲覧valenceから事後気分への予測（Study 1-2: 観察・双方向性のもう片方）",
+          "direction": "ネガティブ閲覧が多いほど事後気分が悪い",
+          "magnitude": "小から中（有意）",
+          "group": "気分測定ありの参加者",
+          "comparison": "ネガティブvalenceによる事後気分予測の線形回帰（事前気分統制）",
+          "value": "Study 1: β=−0.044±0.019, t(58.12)=−2.338, P=0.022。Study 2: β=−0.093±0.035, t(396)=−2.686, P=0.008, r=−0.134",
+          "uncertainty": "ポジティブvalenceでは Study 1のみ有意（P=0.047）、Study 2では非有意（P=0.089）"
         },
         {
           "id": "E4",
-          "what": "感情ラベル介入の効果（Study 4: 介入）",
+          "what": "ネガティブコンテンツ操作による気分への因果効果（Study 3: 実験）",
+          "direction": "悪化",
+          "magnitude": "中から大",
+          "group": "ネガティブ条件(n=55) vs 中立条件(n=47)",
+          "comparison": "ランダム割付による条件間比較の線形回帰",
+          "value": "β=−0.503±0.066, t(101)=−5.034, P<0.001, η²p=0.151。ネガティブ群の推定事後気分=6.505(s.e.=3.059)、中立群=推定周辺平均−4.787(s.e.=2.787)",
+          "uncertainty": "条件間でランダム割付されたが、参加者は自分の条件を認識しうる（需要特性の可能性）"
+        },
+        {
+          "id": "E5",
+          "what": "気分操作後の自由閲覧valenceの変化（Study 3: 実験・逆方向因果の検証）",
+          "direction": "ネガティブ条件群がよりネガティブなコンテンツを選択",
+          "magnitude": "中程度",
+          "group": "操作後の10分間自由閲覧フェーズ",
+          "comparison": "条件間の自由閲覧ネガティブvalenceの独立サンプルt検定",
+          "value": "ネガティブ群M=0.034(s.d.=0.020)、中立群M=0.026(s.d.=0.014)、t(96.04)=−2.259, P=0.026, Cohen's d=−0.436",
+          "uncertainty": "自由閲覧は操作直後の10分間のみ。効果の持続時間は未検証"
+        },
+        {
+          "id": "E6",
+          "what": "感情ラベル介入によるネガティブ閲覧の減少（Study 4a: 介入）",
+          "direction": "ラベル群でネガティブクリック減少",
+          "magnitude": "中程度",
+          "group": "ラベルあり(n=55) vs なし(n=54)",
+          "comparison": "条件間のネガティブ選択数の線形混合効果モデル",
+          "value": "β=−0.328±0.160, t(103)=−2.055, P=0.043, η²p=0.041。ポジティブラベルの効果は非有意（β=0.348±0.177, P=0.052）",
+          "uncertainty": "ラベルの新規性効果が含まれる可能性。中立ウェブページの選択差はなし（P=0.977）"
+        },
+        {
+          "id": "E7",
+          "what": "感情ラベル介入による気分改善（Study 4b: 介入）",
           "direction": "改善",
-          "magnitude": "中程度（β=−0.328）",
-          "group": "ラベルあり群 vs ラベルなし群",
-          "comparison": "検索結果への感情ラベル付与の有無",
-          "value": "ラベル群でネガティブクリック有意減少（β=−0.328）、気分改善",
-          "uncertainty": "ラベルの新規性効果が含まれる可能性"
+          "magnitude": "有意",
+          "group": "ラベル介入参加者(n=200)",
+          "comparison": "ウェブページvalenceによる事後気分予測の線形混合効果モデル",
+          "value": "β=0.090±0.023, t(160.74)=3.941, P<0.001。ポジティブラベルのウェブページ閲覧後に気分改善",
+          "uncertainty": "Study 4bはラベル条件のみ（統制群なし）。介入効果と純粋なvalence効果の分離は限定的"
         }
       ],
       "not_observed": [
         "長期的なメンタルヘルスへの累積効果は未測定",
         "臨床集団での効果は未検証",
-        "閲覧以外のオンライン活動（SNS投稿等）の影響は未分離",
-        "DistilBERTの感情分類精度の限界（文脈依存的なvalenceの見落とし）"
+        "ポジティブvalenceの効果は一貫しない（ネガティブvalenceに特異的な効果の可能性）",
+        "画像・動画のvalenceは未分析（テキストのみ）",
+        "SNS（パスワード保護サイト）の閲覧は除外",
+        "NRC lexiconは文脈非依存（皮肉・否定文等のニュアンスを捉えない）",
+        "閲覧行動の報告バイアスの可能性（参加者は提出を認識）"
       ],
       "notes": [
-        "Study 1-2は観察、Study 3は実験操作、Study 4は介入という段階的デザイン",
-        "NLPツール3種（NRC VAD、Hu-Liu、DistilBERT）でvalence測定の頑健性を確認"
+        "Study 1-2は相関、Study 3は実験操作（ネガティブ vs 中立）、Study 4は介入（感情ラベル）という段階的デザイン",
+        "全結果は年齢・性別・民族・所得・教育・言語の統制後も一貫",
+        "ポジティブvalenceと精神病理の関連は一貫せず、効果はネガティブvalenceに特異的"
       ]
     }
   }
