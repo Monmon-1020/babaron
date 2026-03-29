@@ -505,7 +505,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--mock", action="store_true")
     parser.add_argument("--method", choices=["baseline", "proposed"], default="proposed")
     parser.add_argument("--out", default=None, help="Output JSONL path")
-    parser.add_argument("--model", default="gpt-4o-mini")
+    parser.add_argument("--model", default="gpt-5.4-mini")
     parser.add_argument("--rubric", action="store_true", help="Run Layer 2 rubric evaluation after completion")
     return parser.parse_args()
 
