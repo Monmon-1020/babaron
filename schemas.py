@@ -277,19 +277,49 @@ def normalize_designer_payload(stage: str, payload: Dict[str, Any]) -> Dict[str,
     conclusion = out.get("conclusion")
     if not isinstance(conclusion, dict):
         return out
+
+    # Normalize strength
     strength = conclusion.get("strength")
-    if not isinstance(strength, str):
-        return out
-    s = strength.strip().lower()
-    mapping = {
-        "strong": "strong", "high": "strong",
-        "weak": "weak", "moderate": "weak", "medium": "weak",
-        "hold": "hold", "uncertain": "hold", "pending": "hold",
-        "保留": "hold", "弱い": "weak", "強い": "strong",
+    if isinstance(strength, str):
+        s = strength.strip().lower()
+        strength_mapping = {
+            "strong": "strong", "high": "strong",
+            "weak": "weak", "moderate": "weak", "medium": "weak",
+            "hold": "hold", "uncertain": "hold", "pending": "hold",
+            "保留": "hold", "弱い": "weak", "強い": "strong",
+        }
+        if s in strength_mapping:
+            conclusion["strength"] = strength_mapping[s]
+
+    # Normalize hypothesis judgment decisions: accept→survive, etc.
+    decision_mapping = {
+        "accept": "survive", "accepted": "survive",
+        "survive": "survive", "survived": "survive", "support": "survive",
+        "reject": "reject", "rejected": "reject",
+        "hold": "hold", "pending": "hold", "uncertain": "hold",
     }
-    if s in mapping:
-        conclusion["strength"] = mapping[s]
+    judgments = conclusion.get("hypothesis_judgments", [])
+    if isinstance(judgments, list):
+        for item in judgments:
+            if isinstance(item, dict) and isinstance(item.get("decision"), str):
+                d = item["decision"].strip().lower()
+                if d in decision_mapping:
+                    item["decision"] = decision_mapping[d]
+
+    # Normalize which_hypotheses_survive key variants
+    if "which_hypotheses_survive" not in conclusion:
+        for alt_key in ["which_accepted", "which_survive", "accepted_hypotheses"]:
+            if alt_key in conclusion:
+                conclusion["which_hypotheses_survive"] = conclusion[alt_key]
+                break
+        else:
+            conclusion["which_hypotheses_survive"] = []
+
+    if "which_rejected" not in conclusion:
+        conclusion["which_rejected"] = []
+
     if "remaining_alternatives" not in conclusion:
         conclusion["remaining_alternatives"] = []
+
     out["conclusion"] = conclusion
     return out
