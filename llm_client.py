@@ -93,15 +93,32 @@ class LLMClient:
                         "id": "H2",
                         "statement": "気分状態がその後の閲覧コンテンツのvalence選択に因果的影響を与える（気分→コンテンツ）",
                         "falsify": "気分を実験的に操作した後の自由閲覧フェーズで、条件間の閲覧valenceに差がない場合",
-                        "distinctive_prediction": "ネガティブ気分誘導群がより多くのネガティブコンテンツを選択するが、H1とは独立に検証可能",
+                        "distinctive_prediction": "ネガティブ気分誘導群がより多くのネガティブコンテンツを選択する",
                     },
                     {
                         "id": "H3",
                         "statement": "観察される相関は第三変数（パーソナリティ特性等）によるスプリアスな関連である",
-                        "falsify": "実験操作による因果効果が確認され、相関が操作なしでも個人特性を統制した後に残る場合",
+                        "falsify": "実験操作による因果効果が確認され、個人特性を統制した後にも効果が残る場合",
                         "distinctive_prediction": "個人特性を統制すると閲覧valenceと気分の関連が消失する",
                     },
-                ]
+                ],
+                "hypothesis_relations": [
+                    {
+                        "pair": ["H1", "H2"],
+                        "relation": "independent",
+                        "note": "双方向因果として共存可能。H1（コンテンツ→気分）とH2（気分→コンテンツ）は同時に成立しうる",
+                    },
+                    {
+                        "pair": ["H1", "H3"],
+                        "relation": "exclusive",
+                        "note": "H3はH1の効果が交絡によるものと主張するため、H1が実験で確認されればH3は棄却される",
+                    },
+                    {
+                        "pair": ["H2", "H3"],
+                        "relation": "exclusive",
+                        "note": "H3はH2の効果も交絡によるものと主張するため、H2が実験で確認されればH3は棄却される",
+                    },
+                ],
             }, ensure_ascii=False)
 
         if role == "supervisor" and stage == "S1-CHK":

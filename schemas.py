@@ -68,10 +68,11 @@ def validate_s0(payload: Dict[str, Any]) -> Optional[str]:
 
 
 def validate_s1(payload: Dict[str, Any]) -> Optional[str]:
-    """Validate S1: competing hypotheses with falsify conditions and distinctive predictions."""
+    """Validate S1: hypotheses with falsify conditions, distinctive predictions, and relations."""
     hyps = payload.get("hypotheses")
     if not isinstance(hyps, list) or len(hyps) < 2:
         return "invalid_hypotheses:need_at_least_2"
+    hyp_ids = []
     for item in hyps:
         if not isinstance(item, dict):
             return "invalid_hypothesis_item"
@@ -79,6 +80,25 @@ def validate_s1(payload: Dict[str, Any]) -> Optional[str]:
             val = item.get(key)
             if not isinstance(val, str) or not val.strip():
                 return f"invalid_hypothesis_field:{key}"
+        hyp_ids.append(item["id"])
+
+    # hypothesis_relations: optional but validated if present
+    relations = payload.get("hypothesis_relations", [])
+    if not isinstance(relations, list):
+        return "invalid_hypothesis_relations:not_a_list"
+    valid_relation_types = ("exclusive", "independent", "nested")
+    for rel in relations:
+        if not isinstance(rel, dict):
+            return "invalid_hypothesis_relation_item"
+        pair = rel.get("pair")
+        if not isinstance(pair, list) or len(pair) != 2:
+            return "invalid_hypothesis_relation:pair_must_be_2_ids"
+        for pid in pair:
+            if pid not in hyp_ids:
+                return f"invalid_hypothesis_relation:unknown_id:{pid}"
+        rtype = rel.get("relation")
+        if not isinstance(rtype, str) or rtype not in valid_relation_types:
+            return f"invalid_hypothesis_relation:type_must_be_{'/'.join(valid_relation_types)}"
     return None
 
 

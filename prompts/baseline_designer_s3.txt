@@ -2,6 +2,8 @@
 
 要件:
 - 各仮説をS2の判定規則に照らしてsurvive/reject/holdで判定
+- independentな仮説は各自のエビデンスで独立に判定する（H1のsurviveがH2のrejectを意味しない）
+- exclusiveな仮説は一方の確認が他方の棄却を支持する
 - 証拠IDを付す
 - 結論の強さをstrong/weak/holdで段階づけ
 - 残存する代替説明を列挙する

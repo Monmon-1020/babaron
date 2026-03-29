@@ -96,6 +96,18 @@ def run_mechanical_checks(
     s1_hyps = s1.get("hypotheses", []) if isinstance(s1.get("hypotheses"), list) else []
     s1_ids = [h.get("id") for h in s1_hyps if isinstance(h, dict) and isinstance(h.get("id"), str)]
 
+    # Build relation lookup from S1
+    s1_relations = s1.get("hypothesis_relations", [])
+    relation_map: Dict[tuple, str] = {}
+    if isinstance(s1_relations, list):
+        for rel in s1_relations:
+            if isinstance(rel, dict):
+                pair = rel.get("pair", [])
+                rtype = rel.get("relation", "exclusive")
+                if isinstance(pair, list) and len(pair) == 2:
+                    relation_map[(pair[0], pair[1])] = rtype
+                    relation_map[(pair[1], pair[0])] = rtype
+
     if stage == "S2":
         plan = parsed_designer.get("experiment_plan", {})
         rules = plan.get("hypothesis_rules", []) if isinstance(plan, dict) else []

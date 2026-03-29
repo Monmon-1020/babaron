@@ -29,6 +29,8 @@ RUBRIC_ITEMS = [
      "各仮説について棄却条件が事前に定められている"),
     ("S1", "弁別予測の特定",
      "競合仮説間で異なる予測を生む条件が明示されている"),
+    ("S1", "仮説間の関係の明示",
+     "仮説ペア間の関係（exclusive/independent/nested）が明示されている"),
     # S2
     ("S2", "識別仮定の明示",
      "必要な仮定が列挙され、違反時の帰結が記述されている"),
@@ -120,6 +122,21 @@ def evaluate_s1(s1: Dict[str, Any]) -> List[Tuple[str, str, int, str]]:
             results.append(("S1", "弁別予測の特定", 0, "弁別予測なし"))
     else:
         results.append(("S1", "弁別予測の特定", 0, "仮説なし"))
+
+    # 仮説間の関係の明示
+    relations = s1.get("hypothesis_relations", [])
+    if isinstance(relations, list) and len(relations) >= 1:
+        valid = [r for r in relations if isinstance(r, dict)
+                 and isinstance(r.get("relation"), str)
+                 and r["relation"] in ("exclusive", "independent", "nested")]
+        if len(valid) >= 1 and all(isinstance(r.get("note"), str) and len(r["note"].strip()) > 3 for r in valid):
+            results.append(("S1", "仮説間の関係の明示", 2, f"{len(valid)}ペアの関係が理由付きで明示されている"))
+        elif len(valid) >= 1:
+            results.append(("S1", "仮説間の関係の明示", 1, "関係タイプは指定されているが理由が不十分"))
+        else:
+            results.append(("S1", "仮説間の関係の明示", 0, "有効な関係定義なし"))
+    else:
+        results.append(("S1", "仮説間の関係の明示", 0, "hypothesis_relationsなし"))
 
     return results
 

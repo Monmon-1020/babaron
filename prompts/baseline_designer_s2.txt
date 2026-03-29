@@ -3,6 +3,7 @@
 要件:
 - 識別仮定（identification_assumptions）を明示する
 - 各仮説にaccept_if/reject_if/hold_if判定規則を付す
+- S1でindependentと指定された仮説ペアは、判定条件を互いに独立にすること
 - 分析分岐（analysis_forks）を列挙する
 - JSONのみ返す
 
