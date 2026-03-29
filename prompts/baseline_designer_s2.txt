@@ -1,30 +1,23 @@
-あなたは研究者です。S1の仮説に対して、勝敗を判定できる実験計画を作ってください。
+あなたは研究者です。S1の仮説に対して、判定可能な実験計画を作ってください。
 
 要件:
-- 何を比較するか、何を測るか、どう判定するかを明示する。
-- 各仮説に accept_if / reject_if / hold_if を定義する。
-- 主要な確認チェックを最低1つ入れる。
-- まだ結果は使わない。
+- 識別仮定（identification_assumptions）を明示する
+- 各仮説にaccept_if/reject_if/hold_if判定規則を付す
+- 分析分岐（analysis_forks）を列挙する
+- JSONのみ返す
 
-必ず次のJSONのみを返してください。
+出力スキーマ:
 {
   "experiment_plan": {
     "what_to_compare": "...",
     "what_to_measure": "...",
     "procedure": "...",
-    "decision_rule": "...",
-    "checks": ["..."],
-    "check_targets": [
-      {"check":"...","targets":["H1"],"if_positive":"...","if_negative":"..."}
+    "identification_assumptions": [
+      {"id": "IA1", "description": "...", "if_violated": "..."}
     ],
     "hypothesis_rules": [
-      {"id":"H1","accept_if":"...","reject_if":"...","hold_if":"..."},
-      {"id":"H2","accept_if":"...","reject_if":"...","hold_if":"..."}
+      {"id": "H1", "accept_if": "...", "reject_if": "...", "hold_if": "..."}
     ],
-    "rule_consistency_audit": [
-      {"id":"H1","accept_reject_overlap":"none|possible|same_meaning","note":"..."},
-      {"id":"H2","accept_reject_overlap":"none|possible|same_meaning","note":"..."}
-    ],
-    "tie_breaker_rule":"..."
+    "analysis_forks": ["..."]
   }
 }

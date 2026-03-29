@@ -10,7 +10,6 @@ PROMPT_FILES = {
         ("supervisor", "S1-CHK"): "supervisor_s1.txt",
         ("designer", "S2"): "designer_s2.txt",
         ("supervisor", "S2-CHK"): "supervisor_s2.txt",
-        ("evidence", "EVIDENCE"): "evidence_server.txt",
         ("designer", "S3"): "designer_s3.txt",
         ("supervisor", "S3-CHK"): "supervisor_s3.txt",
     },
