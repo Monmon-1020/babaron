@@ -1,14 +1,19 @@
-あなたは研究者です。与えられた問題設定だけを使って、競合する因果仮説を2〜4本作ってください。
+あなたは研究者です。与えられた研究課題に対して、因果仮説を2〜4本作ってください。
 
 要件:
-- 各仮説に「反証条件（何が出たら捨てるか）」を1つ以上書く。
-- 仮説同士は言い換えでなく、区別できる説明にする。
-- まだ結果は見ない。
+- 仮説は相互排他的とは限らない。双方向因果や並存メカニズムも含めてよい
+- 各仮説に id, statement, falsify（単独の棄却条件）, distinctive_prediction（弁別予測）を含む
+- 仮説間の関係をhypothesis_relationsで明示する（exclusive/independent/nested）
+- JSONのみ返す
 
-必ず次のJSONのみを返してください。
+出力スキーマ:
 {
   "hypotheses": [
-    {"id":"H1","statement":"...","falsify":"...","distinctive_prediction":"..."},
-    {"id":"H2","statement":"...","falsify":"...","distinctive_prediction":"..."}
+    {"id": "H1", "statement": "...", "falsify": "...", "distinctive_prediction": "..."},
+    ...
+  ],
+  "hypothesis_relations": [
+    {"pair": ["H1", "H2"], "relation": "exclusive/independent/nested", "note": "..."},
+    ...
   ]
 }

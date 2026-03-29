@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Minimal workflow runner for Designer / Supervisor / Evidence Server."""
+"""
+3-Layer Oversight Protocol Runner for Observational Causal Inference.
+
+Layer 1: Process-level protocol  (S0 → S1 → S2 → S2-EVID → S3)
+Layer 2: Operationalized rubric  (Explicit / Partial / Absent)
+Layer 3: Audit implementation    (Mechanical Checks + Supervisor)
+"""
 
 from __future__ import annotations
 
@@ -12,7 +18,9 @@ from typing import Any, Dict, List, Optional
 
 from llm_client import LLMClient
 from prompt_store import PromptStore
+from rubric import evaluate_full, format_rubric_report
 from schemas import (
+    normalize_designer_payload,
     normalize_supervisor,
     parse_json_object,
     validate_designer,
@@ -72,43 +80,14 @@ def _extend_unique(dst: List[str], src: List[str]) -> List[str]:
     return dst
 
 
-def normalize_designer_payload(stage: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-    out = dict(payload)
-    if stage != "S3":
-        return out
-    conclusion = out.get("conclusion")
-    if not isinstance(conclusion, dict):
-        return out
-    strength = conclusion.get("strength")
-    if not isinstance(strength, str):
-        return out
-    s = strength.strip().lower()
-    mapping = {
-        "strong": "strong",
-        "high": "strong",
-        "weak": "weak",
-        "moderate": "weak",
-        "medium": "weak",
-        "hold": "hold",
-        "uncertain": "hold",
-        "pending": "hold",
-        "保留": "hold",
-        "弱い": "weak",
-        "強い": "strong",
-    }
-    if s in mapping:
-        conclusion["strength"] = mapping[s]
-    out["conclusion"] = conclusion
-    return out
-
+# ---------------------------------------------------------------------------
+# Layer 3: Mechanical Checks (deterministic consistency checks)
+# ---------------------------------------------------------------------------
 
 def run_mechanical_checks(
     *, stage: str, parsed_designer: Dict[str, Any], context: Dict[str, Any]
 ) -> Dict[str, List[str]]:
-    """
-    Deterministic consistency checks independent from LLM supervisor output.
-    Returns fatal/minor issues and fix instructions.
-    """
+    """Deterministic consistency checks independent from LLM supervisor output."""
     fatal: List[str] = []
     minor: List[str] = []
     fix: List[str] = []
@@ -116,7 +95,18 @@ def run_mechanical_checks(
     s1 = context.get("S1", {}) if isinstance(context.get("S1"), dict) else {}
     s1_hyps = s1.get("hypotheses", []) if isinstance(s1.get("hypotheses"), list) else []
     s1_ids = [h.get("id") for h in s1_hyps if isinstance(h, dict) and isinstance(h.get("id"), str)]
-    s0 = context.get("s0", {}) if isinstance(context.get("s0"), dict) else {}
+
+    # Build relation lookup from S1
+    s1_relations = s1.get("hypothesis_relations", [])
+    relation_map: Dict[tuple, str] = {}
+    if isinstance(s1_relations, list):
+        for rel in s1_relations:
+            if isinstance(rel, dict):
+                pair = rel.get("pair", [])
+                rtype = rel.get("relation", "exclusive")
+                if isinstance(pair, list) and len(pair) == 2:
+                    relation_map[(pair[0], pair[1])] = rtype
+                    relation_map[(pair[1], pair[0])] = rtype
 
     if stage == "S2":
         plan = parsed_designer.get("experiment_plan", {})
@@ -126,10 +116,7 @@ def run_mechanical_checks(
             fix.append("S2で各仮説に対し accept_if/reject_if/hold_if を必ず定義してください。")
             return {"fatal_issues": fatal, "minor_issues": minor, "fix_instructions": fix}
 
-        rule_ids = []
-        for rule in rules:
-            if isinstance(rule, dict) and isinstance(rule.get("id"), str):
-                rule_ids.append(rule["id"])
+        rule_ids = [r["id"] for r in rules if isinstance(r, dict) and isinstance(r.get("id"), str)]
         missing = [hid for hid in s1_ids if hid not in rule_ids]
         extra = [rid for rid in rule_ids if rid not in s1_ids]
         if missing:
@@ -139,11 +126,18 @@ def run_mechanical_checks(
             minor.append(f"S2: S1にない仮説IDが hypothesis_rules に含まれます: {', '.join(extra)}")
             fix.append("hypothesis_rules のIDを S1 の仮説IDと一致させてください。")
 
+        # Check identification assumptions exist
+        assumptions = plan.get("identification_assumptions", []) if isinstance(plan, dict) else []
+        if not isinstance(assumptions, list) or not assumptions:
+            fatal.append("S2: identification_assumptions が空です。")
+            fix.append("識別仮定を少なくとも1つ以上定義してください。")
+
         return {"fatal_issues": fatal, "minor_issues": minor, "fix_instructions": fix}
 
     if stage != "S3":
         return {"fatal_issues": fatal, "minor_issues": minor, "fix_instructions": fix}
 
+    # S3 checks
     conclusion = parsed_designer.get("conclusion", {})
     judgments = conclusion.get("hypothesis_judgments", [])
     if not isinstance(judgments, list) or not judgments:
@@ -234,8 +228,18 @@ def run_mechanical_checks(
     if all_hold and strength != "hold":
         fatal.append("S3: 全仮説holdなら strength は hold にしてください。")
 
+    # Check remaining_alternatives exists
+    remaining = conclusion.get("remaining_alternatives", [])
+    if not isinstance(remaining, list) or not remaining:
+        minor.append("S3: remaining_alternatives が空です。")
+        fix.append("残存する代替説明を少なくとも1つ記述してください。")
+
     return {"fatal_issues": fatal, "minor_issues": minor, "fix_instructions": fix}
 
+
+# ---------------------------------------------------------------------------
+# Designer + Supervisor loop (Layer 3)
+# ---------------------------------------------------------------------------
 
 def run_designer_with_supervisor(
     *,
@@ -249,7 +253,7 @@ def run_designer_with_supervisor(
     out_path: Path,
     context: Dict[str, Any],
 ) -> bool:
-    """Run one stage (S1/S2/S3) with supervisor checks and retry loop."""
+    """Run one stage with supervisor checks and retry loop."""
     check_stage = f"{stage}-CHK"
     feedback: List[str] = []
     previous_designer_output: Optional[Dict[str, Any]] = None
@@ -274,51 +278,22 @@ def run_designer_with_supervisor(
         )
         parsed_designer, parse_err = parse_json_object(raw_designer)
         if parse_err:
-            log_step(
-                out_path,
-                run_id,
-                case_id,
-                stage,
-                attempt,
-                "designer",
-                designer_input,
-                raw_designer,
-                None,
-                "parse_error",
-            )
+            log_step(out_path, run_id, case_id, stage, attempt, "designer",
+                     designer_input, raw_designer, None, "parse_error")
             return False
 
         parsed_designer = normalize_designer_payload(stage, parsed_designer)
         val_err = validate_designer(stage, parsed_designer)
         if val_err:
-            log_step(
-                out_path,
-                run_id,
-                case_id,
-                stage,
-                attempt,
-                "designer",
-                designer_input,
-                raw_designer,
-                parsed_designer,
-                f"schema_error:{val_err}",
-            )
+            log_step(out_path, run_id, case_id, stage, attempt, "designer",
+                     designer_input, raw_designer, parsed_designer, f"schema_error:{val_err}")
             return False
 
-        log_step(
-            out_path,
-            run_id,
-            case_id,
-            stage,
-            attempt,
-            "designer",
-            designer_input,
-            raw_designer,
-            parsed_designer,
-            "success",
-        )
+        log_step(out_path, run_id, case_id, stage, attempt, "designer",
+                 designer_input, raw_designer, parsed_designer, "success")
         previous_designer_output = parsed_designer
 
+        # Supervisor review
         supervisor_input = {
             "case_id": case_id,
             "stage": check_stage,
@@ -335,56 +310,31 @@ def run_designer_with_supervisor(
         )
         parsed_supervisor, parse_err = parse_json_object(raw_supervisor)
         if parse_err:
-            log_step(
-                out_path,
-                run_id,
-                case_id,
-                check_stage,
-                attempt,
-                "supervisor",
-                supervisor_input,
-                raw_supervisor,
-                None,
-                "parse_error",
-            )
+            log_step(out_path, run_id, case_id, check_stage, attempt, "supervisor",
+                     supervisor_input, raw_supervisor, None, "parse_error")
             return False
 
         parsed_supervisor = normalize_supervisor(parsed_supervisor)
         val_err = validate_supervisor(parsed_supervisor)
         if val_err:
-            log_step(
-                out_path,
-                run_id,
-                case_id,
-                check_stage,
-                attempt,
-                "supervisor",
-                supervisor_input,
-                raw_supervisor,
-                parsed_supervisor,
-                f"schema_error:{val_err}",
-            )
+            log_step(out_path, run_id, case_id, check_stage, attempt, "supervisor",
+                     supervisor_input, raw_supervisor, parsed_supervisor, f"schema_error:{val_err}")
             return False
 
-        # Apply deterministic logic checks and merge with supervisor review.
+        # Mechanical checks (Layer 3)
         mech = run_mechanical_checks(stage=stage, parsed_designer=parsed_designer, context=context)
         fatal_mech = mech.get("fatal_issues", [])
         minor_mech = mech.get("minor_issues", [])
         fix_mech = mech.get("fix_instructions", [])
         if fatal_mech or minor_mech:
             parsed_supervisor["fatal_issues"] = _extend_unique(
-                list(parsed_supervisor.get("fatal_issues", [])), list(fatal_mech)
-            )
+                list(parsed_supervisor.get("fatal_issues", [])), list(fatal_mech))
             parsed_supervisor["minor_issues"] = _extend_unique(
-                list(parsed_supervisor.get("minor_issues", [])), list(minor_mech)
-            )
+                list(parsed_supervisor.get("minor_issues", [])), list(minor_mech))
             parsed_supervisor["issues"] = _extend_unique(
-                list(parsed_supervisor.get("issues", [])),
-                list(fatal_mech) + list(minor_mech),
-            )
+                list(parsed_supervisor.get("issues", [])), list(fatal_mech) + list(minor_mech))
             parsed_supervisor["fix_instructions"] = _extend_unique(
-                list(parsed_supervisor.get("fix_instructions", [])), list(fix_mech)
-            )
+                list(parsed_supervisor.get("fix_instructions", [])), list(fix_mech))
             if fatal_mech:
                 parsed_supervisor["verdict"] = "NG"
 
@@ -392,7 +342,7 @@ def run_designer_with_supervisor(
         fatal_issues = parsed_supervisor.get("fatal_issues", []) or []
         minor_issues = parsed_supervisor.get("minor_issues", []) or []
 
-        # Safety valve: if supervisor marked NG but only minor issues exist, pass this stage.
+        # Safety valve: NG with only minor issues → pass
         if verdict == "NG" and not fatal_issues and minor_issues:
             parsed_supervisor["verdict"] = "OK"
             verdict = "OK"
@@ -401,49 +351,19 @@ def run_designer_with_supervisor(
             ) + ["軽微指摘のみのため通過（次ステージで改善継続）"]
 
         if verdict == "OK":
-            log_step(
-                out_path,
-                run_id,
-                case_id,
-                check_stage,
-                attempt,
-                "supervisor",
-                supervisor_input,
-                raw_supervisor,
-                parsed_supervisor,
-                "success",
-            )
+            log_step(out_path, run_id, case_id, check_stage, attempt, "supervisor",
+                     supervisor_input, raw_supervisor, parsed_supervisor, "success")
             context[stage] = parsed_designer
             context[check_stage] = parsed_supervisor
             return True
 
         if attempt >= max_retry:
-            log_step(
-                out_path,
-                run_id,
-                case_id,
-                check_stage,
-                attempt,
-                "supervisor",
-                supervisor_input,
-                raw_supervisor,
-                parsed_supervisor,
-                "stop_by_max_retry",
-            )
+            log_step(out_path, run_id, case_id, check_stage, attempt, "supervisor",
+                     supervisor_input, raw_supervisor, parsed_supervisor, "stop_by_max_retry")
             return False
 
-        log_step(
-            out_path,
-            run_id,
-            case_id,
-            check_stage,
-            attempt,
-            "supervisor",
-            supervisor_input,
-            raw_supervisor,
-            parsed_supervisor,
-            "retry_required",
-        )
+        log_step(out_path, run_id, case_id, check_stage, attempt, "supervisor",
+                 supervisor_input, raw_supervisor, parsed_supervisor, "retry_required")
         previous_supervisor_review = parsed_supervisor
         feedback = parsed_supervisor.get("fix_instructions", [])
 
@@ -462,10 +382,7 @@ def run_designer_only(
     out_path: Path,
     context: Dict[str, Any],
 ) -> bool:
-    """
-    Baseline mode: no supervisor loop.
-    Retry is used only for parse/schema recovery.
-    """
+    """Baseline mode: no supervisor loop."""
     feedback: List[str] = []
     previous_designer_output: Optional[Dict[str, Any]] = None
 
@@ -487,65 +404,39 @@ def run_designer_only(
         )
         parsed_designer, parse_err = parse_json_object(raw_designer)
         if parse_err:
-            status = "stop_by_max_retry" if attempt >= max_retry else "retry_required"
-            log_step(
-                out_path,
-                run_id,
-                case_id,
-                stage,
-                attempt,
-                "designer",
-                designer_input,
-                raw_designer,
-                None,
-                status if status == "stop_by_max_retry" else "parse_error",
-            )
             if attempt >= max_retry:
+                log_step(out_path, run_id, case_id, stage, attempt, "designer",
+                         designer_input, raw_designer, None, "stop_by_max_retry")
                 return False
+            log_step(out_path, run_id, case_id, stage, attempt, "designer",
+                     designer_input, raw_designer, None, "parse_error")
             feedback = ["JSONとして解釈できません。必ず指定スキーマのJSONのみを返してください。"]
             continue
 
         parsed_designer = normalize_designer_payload(stage, parsed_designer)
         val_err = validate_designer(stage, parsed_designer)
         if val_err:
-            status = "stop_by_max_retry" if attempt >= max_retry else "schema_error"
-            log_step(
-                out_path,
-                run_id,
-                case_id,
-                stage,
-                attempt,
-                "designer",
-                designer_input,
-                raw_designer,
-                parsed_designer,
-                f"{status}:{val_err}" if status != "stop_by_max_retry" else status,
-            )
             if attempt >= max_retry:
+                log_step(out_path, run_id, case_id, stage, attempt, "designer",
+                         designer_input, raw_designer, parsed_designer, "stop_by_max_retry")
                 return False
-            feedback = [
-                f"スキーマ違反({val_err})です。指定された必須キーと型を満たすJSONを返してください。"
-            ]
+            log_step(out_path, run_id, case_id, stage, attempt, "designer",
+                     designer_input, raw_designer, parsed_designer, f"schema_error:{val_err}")
+            feedback = [f"スキーマ違反({val_err})です。指定された必須キーと型を満たすJSONを返してください。"]
             previous_designer_output = parsed_designer
             continue
 
-        log_step(
-            out_path,
-            run_id,
-            case_id,
-            stage,
-            attempt,
-            "designer",
-            designer_input,
-            raw_designer,
-            parsed_designer,
-            "success",
-        )
+        log_step(out_path, run_id, case_id, stage, attempt, "designer",
+                 designer_input, raw_designer, parsed_designer, "success")
         context[stage] = parsed_designer
         return True
 
     return False
 
+
+# ---------------------------------------------------------------------------
+# Case runner
+# ---------------------------------------------------------------------------
 
 def run_case(
     *,
@@ -560,166 +451,74 @@ def run_case(
 ) -> bool:
     context: Dict[str, Any] = {}
 
-    # S0: get initial context from evidence server (fixed text mode)
+    # S0: initial context
     s0 = case_payload.get("S0", {"text": "", "notes": []})
     err = validate_evidence(s0, stage="S0")
     if err:
-        log_step(
-            out_path,
-            run_id,
-            case_id,
-            "S0",
-            0,
-            "evidence",
-            {"source": "cases.json"},
-            json.dumps(s0, ensure_ascii=False),
-            s0,
-            f"schema_error:{err}",
-        )
+        log_step(out_path, run_id, case_id, "S0", 0, "evidence",
+                 {"source": "cases.json"}, json.dumps(s0, ensure_ascii=False), s0, f"schema_error:{err}")
         return False
 
     context["s0"] = s0
-    log_step(
-        out_path,
-        run_id,
-        case_id,
-        "S0",
-        0,
-        "evidence",
-        {"source": "cases.json"},
-        json.dumps(s0, ensure_ascii=False),
-        s0,
-        "success",
-    )
+    log_step(out_path, run_id, case_id, "S0", 0, "evidence",
+             {"source": "cases.json"}, json.dumps(s0, ensure_ascii=False), s0, "success")
 
     prompt_profile = "baseline" if method == "baseline" else "proposed"
 
-    if method == "baseline":
-        # Baseline: no supervisor, designer-only flow.
-        if not run_designer_only(
-            run_id=run_id,
-            case_id=case_id,
-            stage="S1",
-            prompt_profile=prompt_profile,
-            max_retry=max_retry,
-            client=client,
-            prompts=prompts,
-            out_path=out_path,
-            context=context,
-        ):
-            return False
+    run_stage = run_designer_only if method == "baseline" else run_designer_with_supervisor
 
-        if not run_designer_only(
-            run_id=run_id,
-            case_id=case_id,
-            stage="S2",
-            prompt_profile=prompt_profile,
-            max_retry=max_retry,
-            client=client,
-            prompts=prompts,
-            out_path=out_path,
-            context=context,
-        ):
-            return False
-    else:
-        # Proposed: designer + supervisor loop.
-        if not run_designer_with_supervisor(
-            run_id=run_id,
-            case_id=case_id,
-            stage="S1",
-            prompt_profile=prompt_profile,
-            max_retry=max_retry,
-            client=client,
-            prompts=prompts,
-            out_path=out_path,
-            context=context,
-        ):
-            return False
+    # S1
+    if not run_stage(
+        run_id=run_id, case_id=case_id, stage="S1",
+        prompt_profile=prompt_profile, max_retry=max_retry,
+        client=client, prompts=prompts, out_path=out_path, context=context,
+    ):
+        return False
 
-        if not run_designer_with_supervisor(
-            run_id=run_id,
-            case_id=case_id,
-            stage="S2",
-            prompt_profile=prompt_profile,
-            max_retry=max_retry,
-            client=client,
-            prompts=prompts,
-            out_path=out_path,
-            context=context,
-        ):
-            return False
+    # S2
+    if not run_stage(
+        run_id=run_id, case_id=case_id, stage="S2",
+        prompt_profile=prompt_profile, max_retry=max_retry,
+        client=client, prompts=prompts, out_path=out_path, context=context,
+    ):
+        return False
 
     # S2-EVID
     s2e = case_payload.get("S2_EVID", {"findings": []})
     err = validate_evidence(s2e, stage="S2-EVID")
     if err:
-        log_step(
-            out_path,
-            run_id,
-            case_id,
-            "S2-EVID",
-            0,
-            "evidence",
-            {"source": "cases.json"},
-            json.dumps(s2e, ensure_ascii=False),
-            s2e,
-            f"schema_error:{err}",
-        )
+        log_step(out_path, run_id, case_id, "S2-EVID", 0, "evidence",
+                 {"source": "cases.json"}, json.dumps(s2e, ensure_ascii=False), s2e, f"schema_error:{err}")
         return False
 
     context["s2_evidence"] = s2e
-    log_step(
-        out_path,
-        run_id,
-        case_id,
-        "S2-EVID",
-        0,
-        "evidence",
-        {"source": "cases.json"},
-        json.dumps(s2e, ensure_ascii=False),
-        s2e,
-        "success",
-    )
+    log_step(out_path, run_id, case_id, "S2-EVID", 0, "evidence",
+             {"source": "cases.json"}, json.dumps(s2e, ensure_ascii=False), s2e, "success")
 
-    if method == "baseline":
-        if not run_designer_only(
-            run_id=run_id,
-            case_id=case_id,
-            stage="S3",
-            prompt_profile=prompt_profile,
-            max_retry=max_retry,
-            client=client,
-            prompts=prompts,
-            out_path=out_path,
-            context=context,
-        ):
-            return False
-    else:
-        # S3 + S3-CHK
-        if not run_designer_with_supervisor(
-            run_id=run_id,
-            case_id=case_id,
-            stage="S3",
-            prompt_profile=prompt_profile,
-            max_retry=max_retry,
-            client=client,
-            prompts=prompts,
-            out_path=out_path,
-            context=context,
-        ):
-            return False
+    # S3
+    if not run_stage(
+        run_id=run_id, case_id=case_id, stage="S3",
+        prompt_profile=prompt_profile, max_retry=max_retry,
+        client=client, prompts=prompts, out_path=out_path, context=context,
+    ):
+        return False
 
     return True
 
 
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Minimal research workflow runner")
-    parser.add_argument("--case", choices=["philly", "chernobyl", "weber", "all"], default="all")
+    parser = argparse.ArgumentParser(description="3-Layer Oversight Protocol Runner")
+    parser.add_argument("--case", default="all", help="Case ID or 'all'")
     parser.add_argument("--max_retry", type=int, default=2)
     parser.add_argument("--mock", action="store_true")
     parser.add_argument("--method", choices=["baseline", "proposed"], default="proposed")
     parser.add_argument("--out", default=None, help="Output JSONL path")
-    parser.add_argument("--model", default="gpt-4o-mini")
+    parser.add_argument("--model", default="gpt-5.4-mini")
+    parser.add_argument("--rubric", action="store_true", help="Run Layer 2 rubric evaluation after completion")
     return parser.parse_args()
 
 
@@ -732,7 +531,7 @@ def main() -> None:
         cases = json.load(f)
 
     if args.case == "all":
-        case_ids = ["philly", "chernobyl", "weber"]
+        case_ids = list(cases.keys())
     else:
         case_ids = [args.case]
 
@@ -740,22 +539,75 @@ def main() -> None:
     prompts = PromptStore("prompts")
 
     success_count = 0
+    all_contexts: Dict[str, Dict[str, Any]] = {}
+
     for case_id in case_ids:
+        if case_id not in cases:
+            print(f"Case '{case_id}' not found in cases.json. Skipping.")
+            continue
         run_id = str(uuid.uuid4())
+
+        # We need to capture context for rubric evaluation
+        context_holder: Dict[str, Any] = {}
+
+        # Patch run_case to capture context
+        case_payload = cases[case_id]
         ok = run_case(
             run_id=run_id,
             case_id=case_id,
-            case_payload=cases[case_id],
+            case_payload=case_payload,
             method=args.method,
             max_retry=max(0, args.max_retry),
             client=client,
             prompts=prompts,
             out_path=out_path,
         )
+
         if ok:
             success_count += 1
 
+            # Reconstruct context from output for rubric evaluation
+            if args.rubric:
+                ctx = _reconstruct_context(out_path, run_id)
+                all_contexts[case_id] = ctx
+
     print(f"Done. success={success_count}/{len(case_ids)} out={out_path}")
+
+    # Layer 2: Rubric evaluation
+    if args.rubric and all_contexts:
+        print("\n" + "=" * 60)
+        print("Layer 2: Rubric Evaluation")
+        print("=" * 60)
+        for case_id, ctx in all_contexts.items():
+            print(f"\n### Case: {case_id}")
+            results = evaluate_full(ctx)
+            print(format_rubric_report(results))
+
+
+def _reconstruct_context(out_path: Path, run_id: str) -> Dict[str, Any]:
+    """Reconstruct context from JSONL output for rubric evaluation."""
+    context: Dict[str, Any] = {}
+    with out_path.open("r", encoding="utf-8") as f:
+        for line in f:
+            row = json.loads(line)
+            if row.get("run_id") != run_id:
+                continue
+            if row.get("status") != "success":
+                continue
+            parsed = row.get("parsed")
+            if not isinstance(parsed, dict):
+                continue
+            stage = row.get("stage", "")
+            role = row.get("role", "")
+            if stage == "S0" and role == "evidence":
+                context["s0"] = parsed
+            elif stage == "S1" and role == "designer":
+                context["S1"] = parsed
+            elif stage == "S2" and role == "designer":
+                context["S2"] = parsed
+            elif stage == "S3" and role == "designer":
+                context["S3"] = parsed
+    return context
 
 
 if __name__ == "__main__":

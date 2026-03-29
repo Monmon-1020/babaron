@@ -1,0 +1,78 @@
+{
+  "_source": "Kelly & Sharot (2025) Nature Human Behaviour, 9, 133-146",
+  "_description": "論文の実際の主張から抽出したgold standard。AIの出力をこれと突合して評価する。",
+
+  "S0_gold": {
+    "estimand": "自発的ウェブ閲覧コンテンツのネガティブvalenceが気分・精神病理に与える因果効果、および気分が閲覧valence選択に与える逆方向因果効果",
+    "primary_outcomes": ["気分（happiness連続尺度）", "閲覧コンテンツのネガティブvalence（NRC lexicon）"],
+    "claim_boundary": {
+      "positive_valence": "ポジティブvalenceの効果は一貫しない（ネガティブに特異的）",
+      "population": "英米オンライン成人。臨床集団は未検証",
+      "temporal": "短期効果のみ。長期累積効果は未検証",
+      "modality": "テキストのみ。画像・動画は未分析"
+    }
+  },
+
+  "S1_gold": {
+    "hypotheses": [
+      {
+        "id": "H1",
+        "claim": "ネガティブ閲覧コンテンツが因果的に気分を悪化させる（コンテンツ→気分）",
+        "paper_support": "Study 3の実験操作で確認。η²p=0.151",
+        "expected_decision": "survive"
+      },
+      {
+        "id": "H2",
+        "claim": "悪い気分が因果的にネガティブ閲覧選択を増やす（気分→コンテンツ）",
+        "paper_support": "Study 1-2の観察 + Study 3の自由閲覧フェーズで確認。Cohen's d=−0.436",
+        "expected_decision": "survive"
+      },
+      {
+        "id": "H3",
+        "claim": "観察される関連は交絡（個人特性等）による見かけ",
+        "paper_support": "Study 3のランダム化実験で因果効果確認により弱まる。ただし観察データでは完全排除できず",
+        "expected_decision": "reject or hold"
+      }
+    ],
+    "key_relation": {
+      "H1_H2": "independent（双方向因果として共存。論文の主要結論は自己強化ループ）",
+      "H1_H3": "exclusive（実験的確認が交絡仮説を弱める）",
+      "H2_H3": "exclusive（実験的確認が交絡仮説を弱める）"
+    }
+  },
+
+  "S3_gold": {
+    "conclusion": {
+      "H1": "survive — Study 3で因果効果確認（β=−0.503, P<0.001, η²p=0.151）",
+      "H2": "survive — Study 3の自由閲覧でネガティブ条件群がよりネガティブ閲覧（P=0.026, d=−0.436）。Study 1-2の観察でも双方向性を支持",
+      "H3": "reject or hold — 実験的操作で因果効果確認済み。ただし観察研究では交絡の完全排除は不可"
+    },
+    "strength": "weak（短期効果のみ、ポジティブvalenceは非一貫、長期効果未検証、NLP測定の限界）",
+    "paper_conclusion": "閲覧情報のvalenceは気分を反映し（気分→コンテンツ）、かつ形成する（コンテンツ→気分）。これは自己強化ループを形成し、メンタルヘルス問題を永続させうる。感情ラベル介入により閲覧パターンを変え、気分を改善できる。",
+    "remaining_alternatives": [
+      "需要特性（参加者が条件を推測）の影響",
+      "閲覧履歴提出の認識による行動修正バイアス",
+      "ポジティブvalenceの非一貫な効果の原因は未解明",
+      "長期累積効果の存在は未確認",
+      "テキスト以外の感情的特性（画像・動画）の影響は未分析"
+    ]
+  },
+
+  "evaluation_criteria": {
+    "S1_correct": {
+      "must": ["H1(コンテンツ→気分)とH2(気分→コンテンツ)が共にindependentとして構造化されている"],
+      "bonus": ["交絡仮説(H3相当)がexclusiveとして構造化されている"]
+    },
+    "S3_correct": {
+      "must": [
+        "H1がsurvive",
+        "H2がsurvive（rejectは誤り）",
+        "strengthがstrongでない（weakまたはhold）"
+      ],
+      "bonus": [
+        "remaining_alternativesにポジティブvalenceの非一貫性が含まれる",
+        "remaining_alternativesに長期効果の未検証が含まれる"
+      ]
+    }
+  }
+}
