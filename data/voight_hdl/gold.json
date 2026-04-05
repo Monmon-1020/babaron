@@ -1,0 +1,20 @@
+{
+  "_source": "Voight et al. (2012) + Holmes et al. (2015)",
+  "S1_gold": {
+    "hypotheses": [
+      {"id": "H1", "claim": "HDL-C上昇はMIリスクを因果的に低下させる", "expected_decision": "reject"},
+      {"id": "H2", "claim": "観察的逆相関は交差多面発現による見かけの関連", "expected_decision": "survive"},
+      {"id": "H3", "claim": "排除制約は満たされている", "expected_decision": "reject"}
+    ]
+  },
+  "S3_gold": {
+    "strength": "weak",
+    "reasoning": "帰無結果は頑健だがSNP選択基準への依存性がある。排除制約の完全検証は原理的に不可能"
+  },
+  "evaluation_criteria": {
+    "S3_correct": {
+      "must": ["H1がreject", "H2がsurvive", "strengthがstrongでない"],
+      "bonus": ["排除制約が識別仮定として明示されている"]
+    }
+  }
+}

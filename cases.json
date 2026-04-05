@@ -577,5 +577,241 @@
         "横断データから因果を主張する典型的なケース"
       ]
     }
+  },
+  "cheng_hoekstra": {
+    "S0": {
+      "text": "2000年から2010年にかけて米国21以上の州で採用されたCastle Doctrine法（Stand Your Ground法）が、暴力犯罪の抑止と殺人の増減にどう影響したかを検討する研究。州境内の法改正の時差的変動を活用したDifference-in-Differencesデザインを使用。",
+      "notes": [
+        "Staggered Two-Way Fixed Effects（TWFE）DiDを使用",
+        "後続のGoodman-Bacon (2021)によりTWFE推定量の問題が指摘されている",
+        "処置効果の時間的異質性がある場合、TWFEは負のウェイトを付与しうる"
+      ],
+      "research_question": "Castle Doctrine法の採用は暴力犯罪を抑止するか、それとも殺人を増加させるか。TWFEによる推定結果はstaggered採用設定における方法論的問題を考慮してもなお頑健か。",
+      "scope": {
+        "population": "米国50州",
+        "intervention_or_exposure": "Castle Doctrine法（Stand Your Ground法）の採用",
+        "comparison": "法採用州 vs 未採用州の時差的変動",
+        "geography": "米国全土",
+        "time_window": "2000-2010年（四半期データ）",
+        "outcome_domain": "殺人・過失致死、窃盗、強盗、加重暴行"
+      }
+    },
+    "S2_EVID": {
+      "findings": [
+        {
+          "id": "E1",
+          "what": "殺人・過失致死への効果",
+          "direction": "増加",
+          "magnitude": "約8%の純増",
+          "group": "法採用州",
+          "comparison": "採用前後、採用州 vs 未採用州",
+          "value": "統計的に有意な約8%増加",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E2",
+          "what": "窃盗・強盗・加重暴行への効果",
+          "direction": "有意でない",
+          "magnitude": "ゼロに近い",
+          "group": "法採用州",
+          "comparison": "採用前後",
+          "value": "抑止効果なし",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E3",
+          "what": "正当防衛殺人の増加",
+          "direction": "増加",
+          "magnitude": "大きい",
+          "group": "法採用州",
+          "comparison": "採用前後",
+          "value": "正当防衛殺人の有意な増加",
+          "uncertainty": "報告バイアスの可能性"
+        },
+        {
+          "id": "E4",
+          "what": "Goodman-Bacon分解の結果",
+          "direction": "推定量が問題含み",
+          "magnitude": "一部比較で負のウェイト",
+          "group": "staggered TWFE推定量",
+          "comparison": "2×2 DiD比較の加重平均分解",
+          "value": "すでに処置を受けた州が対照群として使われている比較が含まれる",
+          "uncertainty": "処置効果の時間的異質性がある場合にバイアスが生じる"
+        }
+      ],
+      "not_observed": [
+        "処置効果の時間的異質性の直接的な検証は元論文には含まれていない",
+        "新しいstaggered DiD推定量（Callaway-Sant'Anna等）による再推定は元論文には含まれていない",
+        "正当防衛殺人の過少報告の程度は正確に測定できない"
+      ],
+      "notes": [
+        "Goodman-Bacon (2021)がこの論文のデータをbacondecompパッケージの標準例として使用",
+        "Baker et al. (2022)がTWFEが真の効果の符号すら逆転させうることをシミュレーションで示した"
+      ]
+    }
+  },
+  "voight_hdl": {
+    "S0": {
+      "text": "HDLコレステロール（HDL-C）と心筋梗塞（MI）リスクの間の観察的逆相関が因果的であるかを、メンデルランダム化（MR）により検討する研究。遺伝的にHDL-Cが高い個体においてMIリスクの低下が認められるかを検証。",
+      "notes": [
+        "単一SNP（LIPG Asn396Ser）と14SNPの遺伝スコアの2つのMR分析を実施",
+        "LDL-Cスコアは正のコントロールとして期待どおりMIと関連",
+        "後続文献で水平的多面発現（horizontal pleiotropy）による排除制約違反が指摘されている"
+      ],
+      "research_question": "HDL-Cの上昇は心筋梗塞リスクを因果的に低下させるか。遺伝的にHDL-Cが高い個体でMIリスクは低いか。MRの排除制約（操作変数がHDL-C以外の経路でMIに影響しない）は満たされているか。",
+      "scope": {
+        "population": "ヨーロッパ系集団（20,913 MI症例、95,407対照）",
+        "intervention_or_exposure": "遺伝的に決定されるHDL-C濃度",
+        "comparison": "LIPG変異キャリア vs 非キャリア、HDL-C遺伝スコア高値 vs 低値",
+        "geography": "主にヨーロッパ・北米の多施設コホート",
+        "time_window": "横断的（遺伝的曝露は生涯にわたる）",
+        "outcome_domain": "心筋梗塞リスク"
+      }
+    },
+    "S2_EVID": {
+      "findings": [
+        {
+          "id": "E1",
+          "what": "LIPG単一SNPによるMR結果",
+          "direction": "帰無",
+          "magnitude": "ゼロに近い",
+          "group": "LIPG Asn396Serキャリア",
+          "comparison": "キャリア vs 非キャリアのMIリスク",
+          "value": "OR 0.99（95% CI 0.88-1.11）、HDL-C 0.12mmol/L上昇あたり",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E2",
+          "what": "14SNP HDL-Cスコアによる MR結果",
+          "direction": "帰無",
+          "magnitude": "ゼロに近い",
+          "group": "HDL-C遺伝スコア高値群",
+          "comparison": "スコア高値 vs 低値のMIリスク",
+          "value": "HDL-Cに『排他的に』関連するSNPでMIリスク低下なし",
+          "uncertainty": "SNP選択基準に依存"
+        },
+        {
+          "id": "E3",
+          "what": "LDL-Cスコアによる正のコントロール",
+          "direction": "期待どおりの関連",
+          "magnitude": "有意",
+          "group": "LDL-C遺伝スコア",
+          "comparison": "スコアとMIリスク",
+          "value": "LDL-Cスコアの上昇はMIリスク増加と有意に関連",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E4",
+          "what": "Holmes et al. (2015)による追加検証",
+          "direction": "帰無",
+          "magnitude": "完全に帰無",
+          "group": "多面発現除外後のHDL-Cスコア",
+          "comparison": "制限付きスコア（19 SNPs）vs 制限なしスコア（48 SNPs）",
+          "value": "制限付きスコアではOR 0.91（95% CI 0.42-1.98）、関連完全消失。制限なしスコアでは見かけの関連あり",
+          "uncertainty": "多面発現SNPの除外基準に依存"
+        },
+        {
+          "id": "E5",
+          "what": "CETP阻害薬の臨床試験結果",
+          "direction": "失敗",
+          "magnitude": "効果なし",
+          "group": "臨床試験参加者",
+          "comparison": "HDL-C上昇薬 vs プラセボ",
+          "value": "torcetrapib、dalcetrapib、evacetrapibの3薬剤が心血管イベント減少に失敗",
+          "uncertainty": "薬剤固有の副作用の可能性"
+        }
+      ],
+      "not_observed": [
+        "HDL-Cの機能的異質性（HDL-Cの量ではなく質が重要な可能性）は直接検証されていない",
+        "SNPの選択基準（『HDL-Cに排他的に関連する』の定義）が結果に影響する",
+        "LIPG SNPの多面発現プロファイルの完全な検証は行われていない"
+      ],
+      "notes": [
+        "排除制約の検証不可能性がMRの本質的限界",
+        "Holmes et al. (2015)が多面発現SNP除外後にシグナル消失を示したのが決定的"
+      ]
+    }
+  },
+  "chen_huairiver": {
+    "S0": {
+      "text": "中国の淮河暖房政策（淮河以北の都市に無料の石炭暖房を提供）が大気汚染を通じて平均寿命に与える影響を、空間的回帰不連続デザイン（地理的RDD）で推定する研究。淮河からの緯度距離をrunning variableとして使用。",
+      "notes": [
+        "淮河以北のTSP濃度が約55%高いことを第一段階として利用",
+        "3次多項式RDDを使用",
+        "Gelman & Zelizer (2015)により多項式次数への感度が指摘されている"
+      ],
+      "research_question": "粒子状大気汚染への長期曝露は平均寿命をどの程度短縮するか。淮河暖房政策の不連続を用いたRDD推定は、多項式の次数選択やバンド幅に対して頑健か。",
+      "scope": {
+        "population": "淮河南北の中国都市住民",
+        "intervention_or_exposure": "無料石炭暖房政策によるTSP（浮遊粒子状物質）曝露の増加",
+        "comparison": "淮河以北（暖房あり）vs 淮河以南（暖房なし）",
+        "geography": "中国、淮河周辺の都市",
+        "time_window": "1981-2000年の死亡率データ",
+        "outcome_domain": "平均寿命、心肺疾患死亡率"
+      }
+    },
+    "S2_EVID": {
+      "findings": [
+        {
+          "id": "E1",
+          "what": "TSP濃度の不連続",
+          "direction": "北側で増加",
+          "magnitude": "約55%高い",
+          "group": "淮河以北の都市",
+          "comparison": "淮河以北 vs 以南",
+          "value": "TSP約184μg/m³の差",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E2",
+          "what": "平均寿命への効果（3次多項式RDD）",
+          "direction": "短縮",
+          "magnitude": "約5.5年",
+          "group": "淮河以北の住民",
+          "comparison": "淮河境界での不連続ジャンプ",
+          "value": "平均寿命約5.5年短縮",
+          "uncertainty": "推定誤差あり"
+        },
+        {
+          "id": "E3",
+          "what": "多項式次数への感度（Gelman & Zelizer 2015）",
+          "direction": "感度が高い",
+          "magnitude": "次数により大幅変動",
+          "group": "同一データ",
+          "comparison": "異なる多項式次数でのRDD推定",
+          "value": "3次で5.5年、他の次数では大幅に異なる推定値。サンプル端で平均寿命約91年という非現実的含意",
+          "uncertainty": "多項式仕様に依存"
+        },
+        {
+          "id": "E4",
+          "what": "共変量バランス検定",
+          "direction": "棄却",
+          "magnitude": "p < 0.05",
+          "group": "カットオフ近傍",
+          "comparison": "共変量の結合検定",
+          "value": "多項式仕様下で共変量バランスが棄却された",
+          "uncertainty": "バンド幅選択に依存"
+        },
+        {
+          "id": "E5",
+          "what": "元著者らの改訂推定（Ebenstein et al. 2017）",
+          "direction": "短縮（方向維持）",
+          "magnitude": "縮小",
+          "group": "改善データ・局所線形回帰",
+          "comparison": "より良いデータと局所線形回帰による再推定",
+          "value": "効果の方向は維持されるが、推定値は元論文より小さい",
+          "uncertainty": "推定誤差あり"
+        }
+      ],
+      "not_observed": [
+        "局所線形回帰による推定は元論文には含まれていない（後続論文で対応）",
+        "カットオフ近傍の観測数（約90箇所）が限られている",
+        "暖房政策以外の淮河南北差（経済水準、医療アクセス等）の完全な統制は困難"
+      ],
+      "notes": [
+        "Gelman & Imbens (2019)が高次多項式RDDを一般的に批判する論文でこの研究を例示",
+        "推定値の方向は後続研究でも維持されているが、大きさは不確実"
+      ]
+    }
   }
 }

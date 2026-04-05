@@ -1,0 +1,21 @@
+{
+  "_source": "Chen et al. (2013) + Gelman & Zelizer (2015) critique",
+  "S1_gold": {
+    "hypotheses": [
+      {"id": "H1", "claim": "大気汚染への長期曝露は平均寿命を短縮する", "expected_decision": "survive"},
+      {"id": "H2", "claim": "推定された5.5年の効果は多項式フィッティングに駆動された見かけの大きさ", "expected_decision": "survive"},
+      {"id": "H3", "claim": "南北差は暖房政策以外の地域差で説明できる", "expected_decision": "hold"}
+    ],
+    "key_relation": {"H1_H2": "independent (方向は存在するが大きさは不確実)"}
+  },
+  "S3_gold": {
+    "strength": "weak",
+    "reasoning": "E3（多項式感度）とE4（共変量バランス問題）により効果の方向はsurviveだが大きさの推定は不安定"
+  },
+  "evaluation_criteria": {
+    "S3_correct": {
+      "must": ["H1がsurvive", "strengthがstrongでない"],
+      "bonus": ["H2がsurvive", "H1とH2がindependent", "多項式次数が分析分岐として明示"]
+    }
+  }
+}
