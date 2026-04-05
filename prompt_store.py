@@ -6,17 +6,30 @@ from pathlib import Path
 
 PROMPT_FILES = {
     "proposed": {
-        ("designer", "S1"): "designer_s1.txt",
-        ("supervisor", "S1-CHK"): "supervisor_s1.txt",
-        ("designer", "S2"): "designer_s2.txt",
-        ("supervisor", "S2-CHK"): "supervisor_s2.txt",
-        ("designer", "S3"): "designer_s3.txt",
-        ("supervisor", "S3-CHK"): "supervisor_s3.txt",
+        ("designer", "S1"): "rubric_designer_s1.txt",
+        ("supervisor", "S1-CHK"): "rubric_supervisor_s1.txt",
+        ("designer", "S2"): "rubric_designer_s2.txt",
+        ("supervisor", "S2-CHK"): "rubric_supervisor_s2.txt",
+        ("designer", "S3"): "rubric_designer_s3.txt",
+        ("supervisor", "S3-CHK"): "rubric_supervisor_s3.txt",
     },
     "baseline": {
         ("designer", "S1"): "baseline_designer_s1.txt",
         ("designer", "S2"): "baseline_designer_s2.txt",
         ("designer", "S3"): "baseline_designer_s3.txt",
+    },
+    "scaffold_only": {
+        ("designer", "S1"): "baseline_designer_s1.txt",
+        ("supervisor", "S1-CHK"): "scaffold_supervisor_s1.txt",
+        ("designer", "S2"): "baseline_designer_s2.txt",
+        ("supervisor", "S2-CHK"): "scaffold_supervisor_s2.txt",
+        ("designer", "S3"): "baseline_designer_s3.txt",
+        ("supervisor", "S3-CHK"): "scaffold_supervisor_s3.txt",
+    },
+    "rubric_only": {
+        ("designer", "S1"): "rubric_designer_s1.txt",
+        ("designer", "S2"): "rubric_designer_s2.txt",
+        ("designer", "S3"): "rubric_designer_s3.txt",
     },
 }
 

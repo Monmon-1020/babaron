@@ -49,25 +49,22 @@ def parse_json_object(raw_output: str) -> Tuple[Optional[Dict[str, Any]], Option
 # ---------------------------------------------------------------------------
 
 def validate_s0(payload: Dict[str, Any]) -> Optional[str]:
-    """Validate S0: estimand, scope, primary/secondary outcomes, claim boundary."""
+    """Validate S0: text is required, other fields validated if present."""
     if "text" not in payload:
         return "missing_key:text"
     if not isinstance(payload["text"], str):
         return "invalid_type:text"
-    for key in ["research_question", "estimand", "scope", "claim_boundary"]:
-        if key not in payload:
-            return f"missing_key:{key}"
-    if not isinstance(payload.get("scope"), dict):
+    if "scope" in payload and not isinstance(payload["scope"], dict):
         return "invalid_type:scope"
-    if not isinstance(payload.get("claim_boundary"), dict):
+    if "claim_boundary" in payload and not isinstance(payload["claim_boundary"], dict):
         return "invalid_type:claim_boundary"
-    for key in ["primary_outcomes", "secondary_outcomes"]:
+    for key in ["primary_outcomes", "secondary_outcomes", "notes"]:
         if key in payload and not isinstance(payload[key], list):
             return f"invalid_type:{key}"
     return None
 
 
-def validate_s1(payload: Dict[str, Any]) -> Optional[str]:
+def validate_s1(payload: Dict[str, Any], extended: bool = False) -> Optional[str]:
     """Validate S1: hypotheses with falsify conditions, distinctive predictions, and relations."""
     hyps = payload.get("hypotheses")
     if not isinstance(hyps, list) or len(hyps) < 2:
@@ -82,48 +79,46 @@ def validate_s1(payload: Dict[str, Any]) -> Optional[str]:
                 return f"invalid_hypothesis_field:{key}"
         hyp_ids.append(item["id"])
 
-    # hypothesis_relations: optional but validated if present
+    # hypothesis_relations: required if extended, optional otherwise
     relations = payload.get("hypothesis_relations", [])
-    if not isinstance(relations, list):
-        return "invalid_hypothesis_relations:not_a_list"
-    valid_relation_types = ("exclusive", "independent", "nested")
-    for rel in relations:
-        if not isinstance(rel, dict):
-            return "invalid_hypothesis_relation_item"
-        pair = rel.get("pair")
-        if not isinstance(pair, list) or len(pair) != 2:
-            return "invalid_hypothesis_relation:pair_must_be_2_ids"
-        for pid in pair:
-            if pid not in hyp_ids:
-                return f"invalid_hypothesis_relation:unknown_id:{pid}"
-        rtype = rel.get("relation")
-        if not isinstance(rtype, str) or rtype not in valid_relation_types:
-            return f"invalid_hypothesis_relation:type_must_be_{'/'.join(valid_relation_types)}"
+    if extended:
+        if not isinstance(relations, list) or len(relations) == 0:
+            return "missing_hypothesis_relations"
+        for rel in relations:
+            if not isinstance(rel, dict):
+                return "invalid_hypothesis_relation_item"
+            if not isinstance(rel.get("pair"), list) or len(rel["pair"]) != 2:
+                return "invalid_hypothesis_relation_pair"
+            if rel.get("relation") not in ("exclusive", "independent", "nested"):
+                return "invalid_hypothesis_relation_type"
+            if not isinstance(rel.get("justification"), str) or not rel["justification"].strip():
+                return "invalid_hypothesis_relation_justification"
+    elif isinstance(relations, list):
+        valid_relation_types = ("exclusive", "independent", "nested")
+        for rel in relations:
+            if not isinstance(rel, dict):
+                return "invalid_hypothesis_relation_item"
+            pair = rel.get("pair")
+            if not isinstance(pair, list) or len(pair) != 2:
+                return "invalid_hypothesis_relation:pair_must_be_2_ids"
+            for pid in pair:
+                if pid not in hyp_ids:
+                    return f"invalid_hypothesis_relation:unknown_id:{pid}"
+            rtype = rel.get("relation")
+            if isinstance(rtype, str) and rtype not in valid_relation_types:
+                return f"invalid_hypothesis_relation:type_must_be_{'/'.join(valid_relation_types)}"
     return None
 
 
-def validate_s2(payload: Dict[str, Any]) -> Optional[str]:
-    """Validate S2: experiment plan with identification assumptions, decision rules, forks."""
+def validate_s2(payload: Dict[str, Any], extended: bool = False) -> Optional[str]:
+    """Validate S2: experiment plan with decision rules, and optionally identification assumptions."""
     plan = payload.get("experiment_plan")
     if not isinstance(plan, dict):
         return "invalid_experiment_plan"
 
-    for key in ["identification_assumptions", "hypothesis_rules", "analysis_forks"]:
-        if key not in plan:
-            return f"missing_experiment_plan_field:{key}"
-
-    # identification_assumptions
-    assumptions = plan["identification_assumptions"]
-    if not isinstance(assumptions, list) or not assumptions:
-        return "invalid_identification_assumptions"
-    for a in assumptions:
-        if not isinstance(a, dict):
-            return "invalid_assumption_item"
-        for key in ["id", "description", "if_violated"]:
-            if not isinstance(a.get(key), str) or not a[key].strip():
-                return f"invalid_assumption_field:{key}"
-
-    # hypothesis_rules
+    # hypothesis_rules required for all conditions
+    if "hypothesis_rules" not in plan:
+        return "missing_experiment_plan_field:hypothesis_rules"
     rules = plan["hypothesis_rules"]
     if not isinstance(rules, list) or not rules:
         return "invalid_hypothesis_rules"
@@ -134,20 +129,43 @@ def validate_s2(payload: Dict[str, Any]) -> Optional[str]:
             if not isinstance(rule.get(key), str) or not rule[key].strip():
                 return f"invalid_hypothesis_rule_field:{key}"
 
-    # analysis_forks
-    forks = plan["analysis_forks"]
-    if not isinstance(forks, list):
-        return "invalid_analysis_forks"
-
     # optional but validated if present
     for key in ["what_to_compare", "what_to_measure", "procedure"]:
         if key in plan and not isinstance(plan[key], str):
             return f"invalid_type:{key}"
 
+    # Extended: identification_assumptions required at top level
+    if extended:
+        assumptions = payload.get("identification_assumptions")
+        if not isinstance(assumptions, list) or len(assumptions) == 0:
+            return "missing_identification_assumptions"
+        for ia in assumptions:
+            if not isinstance(ia, dict):
+                return "invalid_identification_assumption_item"
+            for key in ["id", "assumption", "if_violated"]:
+                if not isinstance(ia.get(key), str) or not ia[key].strip():
+                    return f"invalid_identification_assumption_field:{key}"
+    else:
+        # Non-extended: identification_assumptions in plan is optional but validated
+        assumptions = plan.get("identification_assumptions", [])
+        if isinstance(assumptions, list):
+            for a in assumptions:
+                if isinstance(a, dict):
+                    for key in ["id"]:
+                        if key in a and not isinstance(a[key], str):
+                            return f"invalid_assumption_field:{key}"
+
+    # analysis_forks: optional for baseline/scaffold, validated if present
+    forks = plan.get("analysis_forks", [])
+    if isinstance(forks, list):
+        pass  # valid
+    elif forks is not None:
+        return "invalid_analysis_forks"
+
     return None
 
 
-def validate_s3(payload: Dict[str, Any]) -> Optional[str]:
+def validate_s3(payload: Dict[str, Any], extended: bool = False) -> Optional[str]:
     """Validate S3: conclusion with hypothesis judgments, strength, remaining alternatives."""
     c = payload.get("conclusion")
     if not isinstance(c, dict):
@@ -179,11 +197,8 @@ def validate_s3(payload: Dict[str, Any]) -> Optional[str]:
             if not isinstance(item[bkey], bool):
                 return f"invalid_hypothesis_judgment_{bkey}"
 
-    for key in [
-        "which_hypotheses_survive", "which_rejected",
-        "reasoning", "strength", "next_step",
-        "remaining_alternatives",
-    ]:
+    # Basic required fields
+    for key in ["which_hypotheses_survive", "which_rejected", "reasoning", "strength"]:
         if key not in c:
             return f"missing_conclusion_field:{key}"
 
@@ -193,19 +208,33 @@ def validate_s3(payload: Dict[str, Any]) -> Optional[str]:
         return "invalid_conclusion_which_rejected"
     if c["strength"] not in ("strong", "weak", "hold"):
         return "invalid_conclusion_strength"
-    if not isinstance(c["remaining_alternatives"], list):
-        return "invalid_conclusion_remaining_alternatives"
+
+    # Extended: additional fields required
+    if extended:
+        rcc = c.get("relation_consistency_check")
+        if not isinstance(rcc, list):
+            return "missing_relation_consistency_check"
+        iac = c.get("identification_assumption_concerns")
+        if not isinstance(iac, list):
+            return "missing_identification_assumption_concerns"
+        if not isinstance(c.get("residual_alternatives"), list):
+            return "missing_residual_alternatives"
+        if not isinstance(c.get("strength_justification"), str):
+            return "missing_strength_justification"
+    else:
+        # Non-extended: remaining_alternatives and next_step are expected but not strictly required
+        pass
 
     return None
 
 
-def validate_designer(stage: str, payload: Dict[str, Any]) -> Optional[str]:
+def validate_designer(stage: str, payload: Dict[str, Any], extended: bool = False) -> Optional[str]:
     if stage == "S1":
-        return validate_s1(payload)
+        return validate_s1(payload, extended=extended)
     if stage == "S2":
-        return validate_s2(payload)
+        return validate_s2(payload, extended=extended)
     if stage == "S3":
-        return validate_s3(payload)
+        return validate_s3(payload, extended=extended)
     return f"unknown_stage:{stage}"
 
 

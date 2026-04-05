@@ -107,16 +107,19 @@ class LLMClient:
                         "pair": ["H1", "H2"],
                         "relation": "independent",
                         "note": "双方向因果として共存可能。H1（コンテンツ→気分）とH2（気分→コンテンツ）は同時に成立しうる",
+                        "justification": "双方向因果として共存可能。H1（コンテンツ→気分）とH2（気分→コンテンツ）は同時に成立しうる",
                     },
                     {
                         "pair": ["H1", "H3"],
                         "relation": "exclusive",
                         "note": "H3はH1の効果が交絡によるものと主張するため、H1が実験で確認されればH3は棄却される",
+                        "justification": "H3はH1の効果が交絡によるものと主張するため、H1が実験で確認されればH3は棄却される",
                     },
                     {
                         "pair": ["H2", "H3"],
                         "relation": "exclusive",
                         "note": "H3はH2の効果も交絡によるものと主張するため、H2が実験で確認されればH3は棄却される",
+                        "justification": "H3はH2の効果も交絡によるものと主張するため、H2が実験で確認されればH3は棄却される",
                     },
                 ],
             }, ensure_ascii=False)
@@ -188,7 +191,21 @@ class LLMClient:
                         "外れ値除外基準（±3SD vs ±2SD）",
                         "共変量の選択（年齢・性別・ベースライン気分）",
                     ],
-                }
+                },
+                "identification_assumptions": [
+                    {
+                        "id": "IA1",
+                        "assumption": "ランダム割当により、条件間の気分ベースラインに系統的差異がない",
+                        "description": "ランダム割当により、条件間の気分ベースラインに系統的差異がない",
+                        "if_violated": "ベースライン差が効果推定を歪め、過大/過小推定となる",
+                    },
+                    {
+                        "id": "IA2",
+                        "assumption": "NLPによるvalence測定が閲覧コンテンツの感情的価値を妥当に捕捉している",
+                        "description": "NLPによるvalence測定が閲覧コンテンツの感情的価値を妥当に捕捉している",
+                        "if_violated": "valence測定の誤分類が効果推定にノイズを加え、帰無に向かうバイアスを生じる",
+                    },
+                ],
             }, ensure_ascii=False)
 
         if role == "supervisor" and stage == "S2-CHK":
@@ -248,14 +265,34 @@ class LLMClient:
                     ],
                     "which_hypotheses_survive": ["H1", "H2"],
                     "which_rejected": ["H3"],
-                    "reasoning": "実験的操作（Study 3）により双方向の因果関係が支持された。介入（Study 4）でも行動変容と気分改善が確認された。",
-                    "strength": "weak",
-                    "next_step": "臨床集団での再現性検証、長期介入効果の測定、NLP指標の交差検証",
+                    "relation_consistency_check": [
+                        {"pair": ["H1", "H2"], "declared_relation": "independent", "judgments": ["survive", "survive"], "consistent": True, "note": "independentなのでどちらもsurvive可能"},
+                        {"pair": ["H1", "H3"], "declared_relation": "exclusive", "judgments": ["survive", "reject"], "consistent": True, "note": "exclusiveで一方がsurvive、他方がreject"},
+                    ],
+                    "failed_hypotheses": [{"id": "H3", "reason": "実験操作による因果効果が確認され、交絡仮説は棄却", "evidence_ids": ["E2", "E3"]}],
+                    "surviving_hypotheses": [
+                        {"id": "H1", "remaining_weakness": "短期効果のみ確認"},
+                        {"id": "H2", "remaining_weakness": "自由閲覧フェーズのみ確認"},
+                    ],
+                    "identification_assumption_concerns": [
+                        {"id": "IA1", "violated_or_uncertain": "satisfied", "impact_on_conclusion": "ランダム割付は成立"},
+                        {"id": "IA2", "violated_or_uncertain": "uncertain", "impact_on_conclusion": "NLPのvalence測定精度に不確実性あり"},
+                    ],
+                    "residual_alternatives": [
+                        "需要特性（demand characteristics）が実験結果に影響した可能性",
+                        "短期効果のみであり、長期的な閲覧-気分ループの存在は未確認",
+                        "オンラインサンプルの代表性の限界",
+                    ],
                     "remaining_alternatives": [
                         "需要特性（demand characteristics）が実験結果に影響した可能性",
                         "短期効果のみであり、長期的な閲覧-気分ループの存在は未確認",
                         "オンラインサンプルの代表性の限界",
                     ],
+                    "flip_condition": "NLP指標の誤分類が系統的にネガティブ方向に偏っていた場合、効果は消失する",
+                    "reasoning": "実験的操作（Study 3）により双方向の因果関係が支持された。介入（Study 4）でも行動変容と気分改善が確認された。",
+                    "strength": "weak",
+                    "strength_justification": "識別仮定の一部（NLPの精度）に不確実性が残るため、strongには至らない。",
+                    "next_step": "臨床集団での再現性検証、長期介入効果の測定、NLP指標の交差検証",
                 }
             }, ensure_ascii=False)
 

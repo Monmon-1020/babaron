@@ -85,7 +85,8 @@ def _extend_unique(dst: List[str], src: List[str]) -> List[str]:
 # ---------------------------------------------------------------------------
 
 def run_mechanical_checks(
-    *, stage: str, parsed_designer: Dict[str, Any], context: Dict[str, Any]
+    *, stage: str, parsed_designer: Dict[str, Any], context: Dict[str, Any],
+    extended: bool = False,
 ) -> Dict[str, List[str]]:
     """Deterministic consistency checks independent from LLM supervisor output."""
     fatal: List[str] = []
@@ -126,9 +127,11 @@ def run_mechanical_checks(
             minor.append(f"S2: S1にない仮説IDが hypothesis_rules に含まれます: {', '.join(extra)}")
             fix.append("hypothesis_rules のIDを S1 の仮説IDと一致させてください。")
 
-        # Check identification assumptions exist
+        # Check identification assumptions exist (can be in plan or at top level)
         assumptions = plan.get("identification_assumptions", []) if isinstance(plan, dict) else []
-        if not isinstance(assumptions, list) or not assumptions:
+        top_assumptions = parsed_designer.get("identification_assumptions", [])
+        all_assumptions = assumptions if (isinstance(assumptions, list) and assumptions) else top_assumptions
+        if not isinstance(all_assumptions, list) or not all_assumptions:
             fatal.append("S2: identification_assumptions が空です。")
             fix.append("識別仮定を少なくとも1つ以上定義してください。")
 
@@ -230,9 +233,41 @@ def run_mechanical_checks(
 
     # Check remaining_alternatives exists
     remaining = conclusion.get("remaining_alternatives", [])
-    if not isinstance(remaining, list) or not remaining:
-        minor.append("S3: remaining_alternatives が空です。")
+    residual = conclusion.get("residual_alternatives", [])
+    actual_remaining = remaining or residual
+    if not isinstance(actual_remaining, list) or not actual_remaining:
+        minor.append("S3: remaining_alternatives/residual_alternatives が空です。")
         fix.append("残存する代替説明を少なくとも1つ記述してください。")
+
+    # Extended checks (condition 4: proposed)
+    if extended:
+        # Hypothesis relations vs judgment consistency
+        s1_rels = s1.get("hypothesis_relations", [])
+        if isinstance(s1_rels, list):
+            for rel in s1_rels:
+                if not isinstance(rel, dict):
+                    continue
+                pair = rel.get("pair", [])
+                relation = rel.get("relation")
+                if not isinstance(pair, list) or len(pair) != 2:
+                    continue
+                h_a, h_b = pair
+                dec_a = by_id.get(h_a, {}).get("decision")
+                dec_b = by_id.get(h_b, {}).get("decision")
+                if relation == "exclusive" and dec_a == "survive" and dec_b == "survive":
+                    fatal.append(f"S3: {h_a}と{h_b}はexclusiveだが両方surviveしています。")
+                    fix.append(f"exclusiveな仮説ペア({h_a},{h_b})では両方surviveは不可です。")
+
+        # Identification assumption concerns vs strength
+        iac = conclusion.get("identification_assumption_concerns", [])
+        if isinstance(iac, list):
+            has_violated = any(
+                isinstance(item, dict) and item.get("violated_or_uncertain") in ("violated", "uncertain")
+                for item in iac
+            )
+            if strength == "strong" and has_violated:
+                fatal.append("S3: 識別仮定にviolatedまたはuncertainがあるのにstrength=strongは不可です。")
+                fix.append("識別仮定に懸念がある場合はstrengthをweakまたはholdにしてください。")
 
     return {"fatal_issues": fatal, "minor_issues": minor, "fix_instructions": fix}
 
@@ -252,6 +287,7 @@ def run_designer_with_supervisor(
     prompts: PromptStore,
     out_path: Path,
     context: Dict[str, Any],
+    extended: bool = False,
 ) -> bool:
     """Run one stage with supervisor checks and retry loop."""
     check_stage = f"{stage}-CHK"
@@ -283,7 +319,7 @@ def run_designer_with_supervisor(
             return False
 
         parsed_designer = normalize_designer_payload(stage, parsed_designer)
-        val_err = validate_designer(stage, parsed_designer)
+        val_err = validate_designer(stage, parsed_designer, extended=extended)
         if val_err:
             log_step(out_path, run_id, case_id, stage, attempt, "designer",
                      designer_input, raw_designer, parsed_designer, f"schema_error:{val_err}")
@@ -322,7 +358,7 @@ def run_designer_with_supervisor(
             return False
 
         # Mechanical checks (Layer 3)
-        mech = run_mechanical_checks(stage=stage, parsed_designer=parsed_designer, context=context)
+        mech = run_mechanical_checks(stage=stage, parsed_designer=parsed_designer, context=context, extended=extended)
         fatal_mech = mech.get("fatal_issues", [])
         minor_mech = mech.get("minor_issues", [])
         fix_mech = mech.get("fix_instructions", [])
@@ -381,6 +417,7 @@ def run_designer_only(
     prompts: PromptStore,
     out_path: Path,
     context: Dict[str, Any],
+    extended: bool = False,
 ) -> bool:
     """Baseline mode: no supervisor loop."""
     feedback: List[str] = []
@@ -414,7 +451,7 @@ def run_designer_only(
             continue
 
         parsed_designer = normalize_designer_payload(stage, parsed_designer)
-        val_err = validate_designer(stage, parsed_designer)
+        val_err = validate_designer(stage, parsed_designer, extended=extended)
         if val_err:
             if attempt >= max_retry:
                 log_step(out_path, run_id, case_id, stage, attempt, "designer",
@@ -463,15 +500,18 @@ def run_case(
     log_step(out_path, run_id, case_id, "S0", 0, "evidence",
              {"source": "cases.json"}, json.dumps(s0, ensure_ascii=False), s0, "success")
 
-    prompt_profile = "baseline" if method == "baseline" else "proposed"
+    prompt_profile = method
+    use_extended = method in ("rubric_only", "proposed")
+    use_supervisor = method in ("scaffold_only", "proposed")
 
-    run_stage = run_designer_only if method == "baseline" else run_designer_with_supervisor
+    run_stage = run_designer_with_supervisor if use_supervisor else run_designer_only
 
     # S1
     if not run_stage(
         run_id=run_id, case_id=case_id, stage="S1",
         prompt_profile=prompt_profile, max_retry=max_retry,
         client=client, prompts=prompts, out_path=out_path, context=context,
+        extended=use_extended,
     ):
         return False
 
@@ -480,6 +520,7 @@ def run_case(
         run_id=run_id, case_id=case_id, stage="S2",
         prompt_profile=prompt_profile, max_retry=max_retry,
         client=client, prompts=prompts, out_path=out_path, context=context,
+        extended=use_extended,
     ):
         return False
 
@@ -500,6 +541,7 @@ def run_case(
         run_id=run_id, case_id=case_id, stage="S3",
         prompt_profile=prompt_profile, max_retry=max_retry,
         client=client, prompts=prompts, out_path=out_path, context=context,
+        extended=use_extended,
     ):
         return False
 
@@ -515,7 +557,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--case", default="all", help="Case ID or 'all'")
     parser.add_argument("--max_retry", type=int, default=2)
     parser.add_argument("--mock", action="store_true")
-    parser.add_argument("--method", choices=["baseline", "proposed"], default="proposed")
+    parser.add_argument("--method", choices=["baseline", "scaffold_only", "rubric_only", "proposed"], default="proposed")
     parser.add_argument("--out", default=None, help="Output JSONL path")
     parser.add_argument("--model", default="gpt-5.4-mini")
     parser.add_argument("--rubric", action="store_true", help="Run Layer 2 rubric evaluation after completion")
