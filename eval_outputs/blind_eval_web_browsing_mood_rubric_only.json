@@ -1,0 +1,59 @@
+{
+  "case_id": "web_browsing_mood",
+  "method": "rubric_only",
+  "run_file": "outputs/run_4cond_rubric_only_web_browsing_mood.jsonl",
+  "prompt": "あなたは二つの因果推論分析結果を比較する評価者です。\n研究の背景や目的は知る必要はありません。\n純粋に、二つの分析が同じ因果的主張について同じ判定をしているかを比較してください。\n\n【分析A】（参照分析）\n以下の仮説と判定が与えられています。\n\n  G1: ネガティブなウェブコンテンツの閲覧は気分を悪化させる（コンテンツ→気分の因果効果）\n     判定: survive\n  G2: 気分の悪化はネガティブなウェブコンテンツの閲覧を増加させる（気分→コンテンツの因果効果）\n     判定: survive\n  G3: 閲覧と気分の関連は第三要因（精神病理傾向等）による見かけの相関であり、直接の因果効果はない\n     判定: reject\n\n結論の強さ: weak\n\n【分析B】（評価対象）\n以下の仮説と判定が与えられています。\n\n  H1: 自発的ウェブ閲覧で接触する情報のネガティブなvalenceは、その直後の気分を低下させ、同時に低気分の状態はその後の閲覧でよりネガティブなvalenceの情報選択を増やす。つまり、閲覧valenceと気分は短期的に双方向の因果関係を持つ。\n     判定: reject\n  H2: 自発的ウェブ閲覧で接触する情報のネガティブなvalenceは気分を低下させるが、気分状態はその後の閲覧valence選択を変えない。つまり、因果方向は閲覧valenceから気分への一方向である。\n     判定: reject\n  H3: 気分状態はその後の閲覧valence選択を変えるが、閲覧コンテンツのvalence自体は短期的な気分を変えない。つまり、因果方向は気分から閲覧選択への一方向である。\n     判定: reject\n  H4: ネガティブな閲覧valenceと低気分はともに精神病理症状（anxious-depression, social-withdrawal, compulsive-behaviour）と関連するが、短期的な双方向因果は持たない。つまり、両者の関連は共通原因や選択バイアスによって説明される。\n     判定: reject\n\n結論の強さ: weak\n\n【タスク】\n分析Aの各仮説について、分析Bの中に同じ因果的主張を述べている仮説があるかを判定してください。\n\n「同じ因果的主張」とは、処置（原因）と結果の方向が一致しており、本質的に同じことを主張していることを意味します。表現の違いや詳細度の違いは無視してください。\n\n以下のJSON形式で回答してください。\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"...\",\n      \"matched_b_id\": \"H1 or null\",\n      \"matched_b_statement\": \"...\",\n      \"match_confidence\": \"high/medium/low\",\n      \"match_reasoning\": \"なぜ同じ主張と判断したか（1文）\",\n      \"a_decision\": \"survive\",\n      \"b_decision\": \"survive or null\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a\": \"weak\",\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"分析Bにあるが分析Aに対応がない仮説のID\"]\n}\n\nJSONのみを返してください。\n",
+  "raw_response": "```json\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"ネガティブなウェブコンテンツの閲覧は気分を悪化させる\",\n      \"matched_b_id\": \"H2\",\n      \"matched_b_statement\": \"自発的ウェブ閲覧で接触する情報のネガティブなvalenceは気分を低下させる\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方ともネガティブなコンテンツが気分を悪化させる一方向の因果効果を主張している。\",\n      \"a_decision\": \"survive\",\n      \"b_decision\": \"reject\",\n      \"decision_match\": false\n    },\n    {\n      \"analysis_a_id\": \"G2\",\n      \"analysis_a_statement\": \"気分の悪化はネガティブなウェブコンテンツの閲覧を増加させる\",\n      \"matched_b_id\": \"H3\",\n      \"matched_b_statement\": \"気分状態はその後の閲覧valence選択を変える\",\n      \"match_confidence\": \"medium\",\n      \"match_reasoning\": \"両方とも気分がその後のコンテンツ選択に影響を与えることを主張している。\",\n      \"a_decision\": \"survive\",\n      \"b_decision\": \"reject\",\n      \"decision_match\": false\n    },\n    {\n      \"analysis_a_id\": \"G3\",\n      \"analysis_a_statement\": \"閲覧と気分の関連は第三要因による見かけの相関であり、直接の因果効果はない\",\n      \"matched_b_id\": \"H4\",\n      \"matched_b_statement\": \"ネガティブな閲覧valenceと低気分は共通原因や選択バイアスによって説明される\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方とも関連が共通原因によるもので直接の因果効果がないことを主張している。\",\n      \"a_decision\": \"reject\",\n      \"b_decision\": \"reject\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a\": \"weak\",\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"H1\"]\n}\n```",
+  "parsed": {
+    "matches": [
+      {
+        "analysis_a_id": "G1",
+        "analysis_a_statement": "ネガティブなウェブコンテンツの閲覧は気分を悪化させる",
+        "matched_b_id": "H2",
+        "matched_b_statement": "自発的ウェブ閲覧で接触する情報のネガティブなvalenceは気分を低下させる",
+        "match_confidence": "high",
+        "match_reasoning": "両方ともネガティブなコンテンツが気分を悪化させる一方向の因果効果を主張している。",
+        "a_decision": "survive",
+        "b_decision": "reject",
+        "decision_match": false
+      },
+      {
+        "analysis_a_id": "G2",
+        "analysis_a_statement": "気分の悪化はネガティブなウェブコンテンツの閲覧を増加させる",
+        "matched_b_id": "H3",
+        "matched_b_statement": "気分状態はその後の閲覧valence選択を変える",
+        "match_confidence": "medium",
+        "match_reasoning": "両方とも気分がその後のコンテンツ選択に影響を与えることを主張している。",
+        "a_decision": "survive",
+        "b_decision": "reject",
+        "decision_match": false
+      },
+      {
+        "analysis_a_id": "G3",
+        "analysis_a_statement": "閲覧と気分の関連は第三要因による見かけの相関であり、直接の因果効果はない",
+        "matched_b_id": "H4",
+        "matched_b_statement": "ネガティブな閲覧valenceと低気分は共通原因や選択バイアスによって説明される",
+        "match_confidence": "high",
+        "match_reasoning": "両方とも関連が共通原因によるもので直接の因果効果がないことを主張している。",
+        "a_decision": "reject",
+        "b_decision": "reject",
+        "decision_match": true
+      }
+    ],
+    "strength_a": "weak",
+    "strength_b": "weak",
+    "strength_match": true,
+    "unmatched_b_hypotheses": [
+      "H1"
+    ]
+  },
+  "summary": {
+    "gold_count": 3,
+    "matched": 3,
+    "agreed": 1,
+    "disagreed": 2,
+    "absent": 0,
+    "strength_match": true,
+    "agreement_rate": "1/3"
+  }
+}
