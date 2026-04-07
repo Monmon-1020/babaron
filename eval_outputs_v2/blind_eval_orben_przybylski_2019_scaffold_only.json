@@ -2,8 +2,8 @@
   "case_id": "orben_przybylski_2019",
   "method": "scaffold_only",
   "run_file": "outputs/run_4cond_scaffold_only_orben_przybylski_2019.jsonl",
-  "prompt": "あなたは二つの因果推論分析結果を比較する評価者です。\n研究の背景や目的は知る必要はありません。\n純粋に、二つの分析が同じ因果的主張について同じ判定をしているかを比較してください。\n\n【分析A】（参照分析）\n以下の仮説と判定が与えられています。\n\n  G1: デジタルテクノロジー利用は青少年の幸福感に実質的な負の因果効果を持つ\n     判定: hold\n  G2: デジタルテクノロジー利用と幸福感の関連は存在するが、実質的に無視できるほど小さい\n     判定: survive\n  G3: 関連の大きさは分析仕様（変数の操作化、サンプル選択等）に依存する\n     判定: survive\n\n結論の強さ: weak\n\n【分析B】（評価対象）\n以下の仮説と判定が与えられています。\n\n  H1: デジタルテクノロジー使用量が多いほど、思春期の幸福感はわずかに低い。だが、その関連は全仕様を通じて小さく、実質的意義は限定的である。\n     判定: survive\n  H2: デジタルテクノロジー使用と幸福感の関連は、主として測定・報告バイアスによって生じる。とくに青年本人報告では負の関連が見えるが、親報告や統制の強い仕様では関連はほぼ消失する。\n     判定: survive\n  H3: デジタルテクノロジー使用の影響は平均的には小さいが、特定の使用形態や脆弱なサブグループでは負の影響が強く現れる。したがって、全体平均では弱い関連でも、仕様や測定の違いによって効果が不均一に分布する。\n     判定: hold\n  H4: デジタルテクノロジー使用と幸福感の関連は双方向的であり、幸福感の低さがテクノロジー使用増加を招く逆因果も含む。そのため横断データでは負の関連が観察されても、真の因果効果は小さいか不明瞭である。\n     判定: hold\n\n結論の強さ: weak\n\n【タスク】\n分析Aの各仮説について、分析Bの中に同じ因果的主張を述べている仮説があるかを判定してください。\n\n「同じ因果的主張」とは、処置（原因）と結果の方向が一致しており、本質的に同じことを主張していることを意味します。表現の違いや詳細度の違いは無視してください。\n\n以下のJSON形式で回答してください。\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"...\",\n      \"matched_b_id\": \"H1 or null\",\n      \"matched_b_statement\": \"...\",\n      \"match_confidence\": \"high/medium/low\",\n      \"match_reasoning\": \"なぜ同じ主張と判断したか（1文）\",\n      \"a_decision\": \"survive\",\n      \"b_decision\": \"survive or null\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a\": \"weak\",\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"分析Bにあるが分析Aに対応がない仮説のID\"]\n}\n\nJSONのみを返してください。\n",
-  "raw_response": "```json\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"デジタルテクノロジー利用は青少年の幸福感に実質的な負の因果効果を持つ\",\n      \"matched_b_id\": \"H1\",\n      \"matched_b_statement\": \"デジタルテクノロジー使用量が多いほど、思春期の幸福感はわずかに低い。だが、その関連は全仕様を通じて小さく、実質的意義は限定的である。\",\n      \"match_confidence\": \"medium\",\n      \"match_reasoning\": \"両方ともデジタルテクノロジー使用が幸福感に負の影響を与えると主張しているが、影響の大きさに関する表現が異なる。\",\n      \"a_decision\": \"hold\",\n      \"b_decision\": \"survive\",\n      \"decision_match\": false\n    },\n    {\n      \"analysis_a_id\": \"G2\",\n      \"analysis_a_statement\": \"デジタルテクノロジー利用と幸福感の関連は存在するが、実質的に無視できるほど小さい\",\n      \"matched_b_id\": \"H1\",\n      \"matched_b_statement\": \"デジタルテクノロジー使用量が多いほど、思春期の幸福感はわずかに低い。だが、その関連は全仕様を通じて小さく、実質的意義は限定的である。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方とも関連が小さく、実質的に無視できると主張している。\",\n      \"a_decision\": \"survive\",\n      \"b_decision\": \"survive\",\n      \"decision_match\": true\n    },\n    {\n      \"analysis_a_id\": \"G3\",\n      \"analysis_a_statement\": \"関連の大きさは分析仕様（変数の操作化、サンプル選択等）に依存する\",\n      \"matched_b_id\": \"H3\",\n      \"matched_b_statement\": \"デジタルテクノロジー使用の影響は平均的には小さいが、特定の使用形態や脆弱なサブグループでは負の影響が強く現れる。したがって、全体平均では弱い関連でも、仕様や測定の違いによって効果が不均一に分布する。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方とも関連の大きさが仕様や測定の違いに依存すると主張している。\",\n      \"a_decision\": \"survive\",\n      \"b_decision\": \"hold\",\n      \"decision_match\": false\n    }\n  ],\n  \"strength_a\": \"weak\",\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"H2\", \"H4\"]\n}\n```",
+  "prompt": "あなたは二つの因果推論分析結果を比較する評価者です。\n研究の背景や目的は知る必要はありません。\n純粋に、二つの分析が同じ因果的主張について同じ判定をしているかを比較してください。\n\n【分析A】（参照分析）\n以下の仮説と「許容される判定（acceptable_decisions）」が与えられています。\n分析Bの判定がこの許容リストに含まれていれば一致とみなします。\n\n  G1: デジタルテクノロジー利用は青少年の幸福感に実質的な負の因果効果を持つ\n     許容される判定: ['reject']\n  G2: デジタルテクノロジー利用と幸福感の関連は存在するが、実質的に無視できるほど小さい\n     許容される判定: ['survive', 'hold']\n  G3: 関連の大きさは分析仕様（変数の操作化、サンプル選択等）に依存する\n     許容される判定: ['survive']\n\n結論の強さの許容範囲: ['weak']\n\n【分析B】（評価対象）\n以下の仮説と判定が与えられています。\n\n  H1: デジタルテクノロジー使用量が多いほど、思春期の幸福感はわずかに低い。だが、その関連は全仕様を通じて小さく、実質的意義は限定的である。\n     判定: survive\n  H2: デジタルテクノロジー使用と幸福感の関連は、主として測定・報告バイアスによって生じる。とくに青年本人報告では負の関連が見えるが、親報告や統制の強い仕様では関連はほぼ消失する。\n     判定: survive\n  H3: デジタルテクノロジー使用の影響は平均的には小さいが、特定の使用形態や脆弱なサブグループでは負の影響が強く現れる。したがって、全体平均では弱い関連でも、仕様や測定の違いによって効果が不均一に分布する。\n     判定: hold\n  H4: デジタルテクノロジー使用と幸福感の関連は双方向的であり、幸福感の低さがテクノロジー使用増加を招く逆因果も含む。そのため横断データでは負の関連が観察されても、真の因果効果は小さいか不明瞭である。\n     判定: hold\n\n結論の強さ: weak\n\n【タスク】\n分析Aの各仮説について、分析Bの中に同じ因果的主張を述べている仮説があるかを判定してください。\n\n「同じ因果的主張」とは、処置（原因）と結果の方向が一致しており、本質的に同じことを主張していることを意味します。表現の違いや詳細度の違いは無視してください。\n\n判定の一致は、分析Bの判定が分析Aの「許容される判定」リストのいずれかに含まれていればtrue、そうでなければfalseとします。対応する仮説が見つからない場合（matched_b_id が null）は decision_match を false にしてください。\n\n以下のJSON形式で回答してください。\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"...\",\n      \"matched_b_id\": \"H1 or null\",\n      \"matched_b_statement\": \"...\",\n      \"match_confidence\": \"high/medium/low\",\n      \"match_reasoning\": \"なぜ同じ主張と判断したか（1文）\",\n      \"a_acceptable\": [\"survive\", \"hold\"],\n      \"b_decision\": \"survive or null\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"分析Bにあるが分析Aに対応がない仮説のID\"]\n}\n\nJSONのみを返してください。\n",
+  "raw_response": "```json\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"デジタルテクノロジー利用は青少年の幸福感に実質的な負の因果効果を持つ\",\n      \"matched_b_id\": \"H1\",\n      \"matched_b_statement\": \"デジタルテクノロジー使用量が多いほど、思春期の幸福感はわずかに低い。だが、その関連は全仕様を通じて小さく、実質的意義は限定的である。\",\n      \"match_confidence\": \"medium\",\n      \"match_reasoning\": \"両方ともデジタルテクノロジー使用が幸福感に負の影響を与えると主張しているが、分析Bはその影響が小さいと述べている。\",\n      \"a_acceptable\": [\"reject\"],\n      \"b_decision\": \"survive\",\n      \"decision_match\": false\n    },\n    {\n      \"analysis_a_id\": \"G2\",\n      \"analysis_a_statement\": \"デジタルテクノロジー利用と幸福感の関連は存在するが、実質的に無視できるほど小さい\",\n      \"matched_b_id\": \"H1\",\n      \"matched_b_statement\": \"デジタルテクノロジー使用量が多いほど、思春期の幸福感はわずかに低い。だが、その関連は全仕様を通じて小さく、実質的意義は限定的である。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方とも関連が小さく、実質的に無視できると述べている。\",\n      \"a_acceptable\": [\"survive\", \"hold\"],\n      \"b_decision\": \"survive\",\n      \"decision_match\": true\n    },\n    {\n      \"analysis_a_id\": \"G3\",\n      \"analysis_a_statement\": \"関連の大きさは分析仕様（変数の操作化、サンプル選択等）に依存する\",\n      \"matched_b_id\": \"H3\",\n      \"matched_b_statement\": \"デジタルテクノロジー使用の影響は平均的には小さいが、特定の使用形態や脆弱なサブグループでは負の影響が強く現れる。したがって、全体平均では弱い関連でも、仕様や測定の違いによって効果が不均一に分布する。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方とも関連の大きさが仕様や測定の違いに依存すると述べている。\",\n      \"a_acceptable\": [\"survive\"],\n      \"b_decision\": \"hold\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"H2\", \"H4\"]\n}\n```",
   "parsed": {
     "matches": [
       {
@@ -12,13 +12,12 @@
         "matched_b_id": "H1",
         "matched_b_statement": "デジタルテクノロジー使用量が多いほど、思春期の幸福感はわずかに低い。だが、その関連は全仕様を通じて小さく、実質的意義は限定的である。",
         "match_confidence": "medium",
-        "match_reasoning": "両方ともデジタルテクノロジー使用が幸福感に負の影響を与えると主張しているが、影響の大きさに関する表現が異なる。",
-        "a_decision": "hold",
-        "b_decision": "survive",
-        "decision_match": false,
+        "match_reasoning": "両方ともデジタルテクノロジー使用が幸福感に負の影響を与えると主張しているが、分析Bはその影響が小さいと述べている。",
         "a_acceptable": [
           "reject"
-        ]
+        ],
+        "b_decision": "survive",
+        "decision_match": false
       },
       {
         "analysis_a_id": "G2",
@@ -26,14 +25,13 @@
         "matched_b_id": "H1",
         "matched_b_statement": "デジタルテクノロジー使用量が多いほど、思春期の幸福感はわずかに低い。だが、その関連は全仕様を通じて小さく、実質的意義は限定的である。",
         "match_confidence": "high",
-        "match_reasoning": "両方とも関連が小さく、実質的に無視できると主張している。",
-        "a_decision": "survive",
-        "b_decision": "survive",
-        "decision_match": true,
+        "match_reasoning": "両方とも関連が小さく、実質的に無視できると述べている。",
         "a_acceptable": [
           "survive",
           "hold"
-        ]
+        ],
+        "b_decision": "survive",
+        "decision_match": true
       },
       {
         "analysis_a_id": "G3",
@@ -41,24 +39,22 @@
         "matched_b_id": "H3",
         "matched_b_statement": "デジタルテクノロジー使用の影響は平均的には小さいが、特定の使用形態や脆弱なサブグループでは負の影響が強く現れる。したがって、全体平均では弱い関連でも、仕様や測定の違いによって効果が不均一に分布する。",
         "match_confidence": "high",
-        "match_reasoning": "両方とも関連の大きさが仕様や測定の違いに依存すると主張している。",
-        "a_decision": "survive",
-        "b_decision": "hold",
-        "decision_match": false,
+        "match_reasoning": "両方とも関連の大きさが仕様や測定の違いに依存すると述べている。",
         "a_acceptable": [
           "survive"
-        ]
+        ],
+        "b_decision": "hold",
+        "decision_match": false
       }
     ],
-    "strength_a": "weak",
+    "strength_a_acceptable": [
+      "weak"
+    ],
     "strength_b": "weak",
     "strength_match": true,
     "unmatched_b_hypotheses": [
       "H2",
       "H4"
-    ],
-    "strength_a_acceptable": [
-      "weak"
     ]
   },
   "summary": {

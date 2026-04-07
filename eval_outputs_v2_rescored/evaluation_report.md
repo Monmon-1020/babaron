@@ -26,10 +26,10 @@
 
 - gpt-4o（実験のgpt-5.4-miniと異なるモデル）に分析A（gold）と分析B（評価対象）を渡し、意味的対応と判定一致を判定させる
 - LLMには研究の目的・プロトコル名・どちらが正解かを伝えない
-- プロンプトには `acceptable_decisions` / `acceptable_strengths` を埋め込み、LLMにも許容範囲を共有
-- 突合後、`acceptable_*` との一致を後処理でも再計算（LLMの判断を上書き、二重チェック）
+- 突合後、`acceptable_decisions`/`acceptable_strengths`との一致を後処理で再計算（LLMの判断を上書き）
 - temperature=0.0、各突合は独立コール
-- **全24件（4条件×6ケース）を gpt-4o で新規実行**（v2 gold standard 用に新規API呼び出し）
+
+**実装上の注意**: 既存ブラインド突合結果（eval_outputs/）はLLMの`matched_b_id`/`b_decision`/`strength_b`抽出までは使用可能だったため、`rescore_blind_eval.py` により API追加コール無しで gold v2 評価を行った。
 
 ### 1.3 評価C: Supervisor分析の手順
 
@@ -50,7 +50,7 @@
 | Kelly | scaffold_only | 2/3 | OK | 3/4 |
 | Kelly | rubric_only | 1/3 | OK | 2/4 |
 | **Kelly** | **proposed** | **3/3** | **OK** | **4/4** |
-| Orben | baseline | 2/3 | OK | 3/4 |
+| Orben | baseline | 3/3 | OK | 4/4 |
 | Orben | scaffold_only | 1/3 | OK | 2/4 |
 | Orben | rubric_only | 3/3 | OK | 4/4 |
 | Orben | proposed | 2/3 | OK | 3/4 |
@@ -75,17 +75,15 @@
 
 | 条件 | 仮説一致 (decision) | strength一致 | 合計一致率 (combined) |
 |------|------------------|-------------|------------------|
-| baseline | 10/17 (58.8%) | 3/6 (50.0%) | 13/23 (56.5%) |
+| baseline | 11/17 (64.7%) | 3/6 (50.0%) | 14/23 (60.9%) |
 | scaffold_only | 9/17 (52.9%) | 4/6 (66.7%) | 13/23 (56.5%) |
 | rubric_only | 10/17 (58.8%) | 4/6 (66.7%) | 14/23 (60.9%) |
 | **proposed** | **11/17 (64.7%)** | **4/6 (66.7%)** | **15/23 (65.2%)** |
 
 **主な発見**:
-- combined（仮説 + strength）で proposed が **単独最高（65.2%）**
-- proposed は decision 単独でも最高（11/17）
-- baseline と scaffold_only は同率最下位（13/23）
+- combined（仮説 + strength）で proposed が最高（65.2%）
+- baseline と proposed は decision 単独では同率（11/17）だが、proposed は strength で1点上回る
 - scaffold_only は decision で最低（9/17）— supervisor が NG を出して修正させる過程で必ずしも改善しない
-- rubric_only は decision で baseline と同率だが strength で上回る
 
 ### 表3: 許容範囲の効果
 
@@ -199,19 +197,7 @@
 
 ## 6. 注意事項
 
-- 本v2評価は **gpt-4o による新規ブラインド突合**を全24件実行（API quota復旧後）
-- 突合プロンプトには `acceptable_decisions` / `acceptable_strengths` を含め、LLMにも許容範囲を共有
-- 後処理でも `acceptable_*` との一致を再計算し、二重チェック
-- 並行して `eval_outputs_v2_rescored/` に v1 結果を後処理した版も保存（参考用）
-- 新規実行版と rescore版で combined rate は概ね一致（proposed 15/23 で同じ）
-
-### 参考: rescore版との比較
-
-| method | rescore (post-process) | 新規実行 |
-|--------|---|---|
-| baseline | 14/23 | **13/23** |
-| scaffold_only | 13/23 | 13/23 |
-| rubric_only | 14/23 | 14/23 |
-| **proposed** | **15/23** | **15/23** |
-
-新規実行で baseline が1点下がったが、**proposed が単独最高という結論は変わらず**。
+- 本v2評価は OpenAI API quota 切れにより、新しい blind 突合は実行できなかった
+- 既存の v1 突合結果 (eval_outputs/) から、`matched_b_id` / `b_decision` / `strength_b` を再利用し、`acceptable_*` リストとの照合のみを後処理で再実行
+- 結果として LLM 突合自体は v1 と同じ。**変わったのは「許容範囲」の導入のみ**
+- API quota 復旧後は `python blind_eval.py --out eval_outputs_v3/` で新規実行可能
