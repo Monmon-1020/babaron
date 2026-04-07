@@ -129,9 +129,9 @@ def validate_s2(payload: Dict[str, Any], extended: bool = False) -> Optional[str
             if not isinstance(rule.get(key), str) or not rule[key].strip():
                 return f"invalid_hypothesis_rule_field:{key}"
 
-    # optional but validated if present
+    # optional but validated if present (allow str or list)
     for key in ["what_to_compare", "what_to_measure", "procedure"]:
-        if key in plan and not isinstance(plan[key], str):
+        if key in plan and not isinstance(plan[key], (str, list)):
             return f"invalid_type:{key}"
 
     # Extended: identification_assumptions required at top level

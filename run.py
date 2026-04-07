@@ -193,13 +193,29 @@ def run_mechanical_checks(
             true_count = sum([accept_met, reject_met, hold_met])
             if true_count != 1:
                 fatal.append(f"S3: {hid} の条件一致フラグはちょうど1つだけ true にしてください。")
-                fix.append("accept_condition_met/reject_condition_met/hold_condition_met を排他的に設定してください。")
+                fix.append(
+                    "accept_condition_met/reject_condition_met/hold_condition_met を排他的に設定してください。"
+                    "【重要】decisionの値は変更せず、フラグのみを修正してください。"
+                    "surviveならaccept_condition_met=true、rejectならreject_condition_met=true、"
+                    "holdならhold_condition_met=trueとし、他の2つをfalseにしてください。"
+                )
             if decision == "survive" and (not accept_met or reject_met):
-                fatal.append(f"S3: {hid} は survive なのに条件一致フラグが不整合です。")
+                fatal.append(
+                    f"S3: {hid} は survive なのに条件一致フラグが不整合です。"
+                    f"【修正方法】decision=surviveを維持したまま、accept_condition_met=true, "
+                    f"reject_condition_met=false, hold_condition_met=false に設定してください。"
+                    f"decisionを変更してはいけません。"
+                )
             if decision == "reject" and not reject_met:
-                fatal.append(f"S3: {hid} は reject なのに reject_condition_met が false です。")
+                fatal.append(
+                    f"S3: {hid} は reject なのに reject_condition_met が false です。"
+                    f"decision=rejectを維持したまま、reject_condition_met=true に設定してください。"
+                )
             if decision == "hold" and not hold_met:
-                fatal.append(f"S3: {hid} は hold なのに hold_condition_met が false です。")
+                fatal.append(
+                    f"S3: {hid} は hold なのに hold_condition_met が false です。"
+                    f"decision=holdを維持したまま、hold_condition_met=true に設定してください。"
+                )
         else:
             fatal.append(f"S3: {hid} の条件一致フラグが不足、または型不正です。")
             fix.append("各仮説に3つの条件一致フラグ（bool）を必ず出力してください。")
