@@ -1,0 +1,69 @@
+{
+  "case_id": "twenge_2018",
+  "method": "baseline",
+  "run_file": "outputs/run_4cond_baseline_twenge_2018_v3.jsonl",
+  "prompt": "あなたは二つの因果推論分析結果を比較する評価者です。\n研究の背景や目的は知る必要はありません。\n純粋に、二つの分析が同じ因果的主張について同じ判定をしているかを比較してください。\n\n【分析A】（参照分析）\n以下の仮説と「許容される判定（acceptable_decisions）」が与えられています。\n分析Bの判定がこの許容リストに含まれていれば一致とみなします。\n\n  G1: スクリーンタイムの増加は青少年の幸福感低下の原因である\n     許容される判定: ['survive', 'hold']\n  G2: 幸福感低下は経済的要因や他の時代的変化で説明できる\n     許容される判定: ['survive', 'hold']\n  G3: 因果は逆方向：幸福感が低い青少年がスクリーンタイムを増やす\n     許容される判定: ['survive']\n\n結論の強さの許容範囲: ['weak']\n\n【分析B】（評価対象）\n以下の仮説と判定が与えられています。\n\n  H1: 2012年以降の米国青少年の心理的well-being低下は、主としてスクリーン活動（特に電子コミュニケーションやソーシャルメディア）の増加によって引き起こされた。スクリーン活動は対面交流や睡眠・運動などの代替時間を圧迫し、well-beingを低下させる主要因である。\n     判定: survive\n  H2: 2012年以降のwell-being低下は、主として経済的要因や社会環境の悪化（例: 失業率上昇、家庭ストレス、将来不安）によって生じ、スクリーン活動の増加はその結果として生じた二次的現象にすぎない。\n     判定: reject\n  H3: 2012年以降のwell-being低下は、スクリーン活動と経済的要因の双方が独立に寄与した複合的結果である。スクリーン活動は主に日常行動の置換を通じて、経済要因はストレスや不安を通じて、それぞれ別経路でwell-beingを低下させる。\n     判定: hold\n  H4: 2012年以降のwell-being低下は、スクリーン活動の増加が原因というより、既に低下しつつあるwell-beingが青少年をスクリーン活動へ向かわせる逆因果、または第三の要因（例: 学校・家庭環境の変化）による共通原因で説明される。\n     判定: hold\n\n結論の強さ: weak\n\n【タスク】\n分析Aの各仮説について、分析Bの中に同じ因果的主張を述べている仮説があるかを判定してください。\n\n「同じ因果的主張」とは、処置（原因）と結果の方向が一致しており、本質的に同じことを主張していることを意味します。表現の違いや詳細度の違いは無視してください。\n\n判定の一致は、分析Bの判定が分析Aの「許容される判定」リストのいずれかに含まれていればtrue、そうでなければfalseとします。対応する仮説が見つからない場合（matched_b_id が null）は decision_match を false にしてください。\n\n以下のJSON形式で回答してください。\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"...\",\n      \"matched_b_id\": \"H1 or null\",\n      \"matched_b_statement\": \"...\",\n      \"match_confidence\": \"high/medium/low\",\n      \"match_reasoning\": \"なぜ同じ主張と判断したか（1文）\",\n      \"a_acceptable\": [\"survive\", \"hold\"],\n      \"b_decision\": \"survive or null\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"分析Bにあるが分析Aに対応がない仮説のID\"]\n}\n\nJSONのみを返してください。\n",
+  "raw_response": "```json\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"スクリーンタイムの増加は青少年の幸福感低下の原因である\",\n      \"matched_b_id\": \"H1\",\n      \"matched_b_statement\": \"2012年以降の米国青少年の心理的well-being低下は、主としてスクリーン活動の増加によって引き起こされた。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方の仮説はスクリーンタイムの増加が幸福感低下の原因であると主張している。\",\n      \"a_acceptable\": [\"survive\", \"hold\"],\n      \"b_decision\": \"survive\",\n      \"decision_match\": true\n    },\n    {\n      \"analysis_a_id\": \"G2\",\n      \"analysis_a_statement\": \"幸福感低下は経済的要因や他の時代的変化で説明できる\",\n      \"matched_b_id\": \"H2\",\n      \"matched_b_statement\": \"2012年以降のwell-being低下は、主として経済的要因や社会環境の悪化によって生じた。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方の仮説は幸福感低下が経済的要因で説明できると主張している。\",\n      \"a_acceptable\": [\"survive\", \"hold\"],\n      \"b_decision\": \"reject\",\n      \"decision_match\": false\n    },\n    {\n      \"analysis_a_id\": \"G3\",\n      \"analysis_a_statement\": \"因果は逆方向：幸福感が低い青少年がスクリーンタイムを増やす\",\n      \"matched_b_id\": \"H4\",\n      \"matched_b_statement\": \"well-beingが低下しつつあることが青少年をスクリーン活動へ向かわせる逆因果で説明される。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方の仮説は幸福感低下がスクリーンタイム増加を引き起こす逆因果を主張している。\",\n      \"a_acceptable\": [\"survive\"],\n      \"b_decision\": \"hold\",\n      \"decision_match\": false\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"H3\"]\n}\n```",
+  "parsed": {
+    "matches": [
+      {
+        "analysis_a_id": "G1",
+        "analysis_a_statement": "スクリーンタイムの増加は青少年の幸福感低下の原因である",
+        "matched_b_id": "H1",
+        "matched_b_statement": "2012年以降の米国青少年の心理的well-being低下は、主としてスクリーン活動の増加によって引き起こされた。",
+        "match_confidence": "high",
+        "match_reasoning": "両方の仮説はスクリーンタイムの増加が幸福感低下の原因であると主張している。",
+        "a_acceptable": [
+          "survive",
+          "hold"
+        ],
+        "b_decision": "survive",
+        "decision_match": true
+      },
+      {
+        "analysis_a_id": "G2",
+        "analysis_a_statement": "幸福感低下は経済的要因や他の時代的変化で説明できる",
+        "matched_b_id": "H2",
+        "matched_b_statement": "2012年以降のwell-being低下は、主として経済的要因や社会環境の悪化によって生じた。",
+        "match_confidence": "high",
+        "match_reasoning": "両方の仮説は幸福感低下が経済的要因で説明できると主張している。",
+        "a_acceptable": [
+          "survive",
+          "hold"
+        ],
+        "b_decision": "reject",
+        "decision_match": false
+      },
+      {
+        "analysis_a_id": "G3",
+        "analysis_a_statement": "因果は逆方向：幸福感が低い青少年がスクリーンタイムを増やす",
+        "matched_b_id": "H4",
+        "matched_b_statement": "well-beingが低下しつつあることが青少年をスクリーン活動へ向かわせる逆因果で説明される。",
+        "match_confidence": "high",
+        "match_reasoning": "両方の仮説は幸福感低下がスクリーンタイム増加を引き起こす逆因果を主張している。",
+        "a_acceptable": [
+          "survive"
+        ],
+        "b_decision": "hold",
+        "decision_match": false
+      }
+    ],
+    "strength_a_acceptable": [
+      "weak"
+    ],
+    "strength_b": "weak",
+    "strength_match": true,
+    "unmatched_b_hypotheses": [
+      "H3"
+    ]
+  },
+  "summary": {
+    "gold_count": 3,
+    "matched": 3,
+    "agreed": 1,
+    "disagreed": 2,
+    "absent": 0,
+    "strength_match": true,
+    "agreement_rate": "1/3"
+  }
+}

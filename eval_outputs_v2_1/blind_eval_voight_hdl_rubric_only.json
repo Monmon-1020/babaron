@@ -1,0 +1,55 @@
+{
+  "case_id": "voight_hdl",
+  "method": "rubric_only",
+  "run_file": "outputs/run_4cond_rubric_only_voight_hdl_v3.jsonl",
+  "prompt": "あなたは二つの因果推論分析結果を比較する評価者です。\n研究の背景や目的は知る必要はありません。\n純粋に、二つの分析が同じ因果的主張について同じ判定をしているかを比較してください。\n\n【分析A】（参照分析）\n以下の仮説と「許容される判定（acceptable_decisions）」が与えられています。\n分析Bの判定がこの許容リストに含まれていれば一致とみなします。\n\n  G1: HDL-C上昇は心筋梗塞リスクを因果的に低下させる（HDL仮説）\n     許容される判定: ['reject']\n  G2: HDL-Cと心筋梗塞の観察的逆相関は、LDL-Cやトリグリセリドとの交差多面発現による見かけの関連である\n     許容される判定: ['survive']\n\n結論の強さの許容範囲: ['strong']\n\n【分析B】（評価対象）\n以下の仮説と判定が与えられています。\n\n  H1: 遺伝的にHDL-Cが高いことは、MIリスクを因果的に低下させる（HDL-C上昇→MI低下の方向効果がある）。\n     判定: reject\n  H2: HDL-C上昇のMI低下効果は、実質的に意味のある大きさである（方向効果があるだけでなく、効果量が事前に定めた閾値を超える）。\n     判定: reject\n  H3: 観察されるHDL-CとMIの逆相関は、HDL-Cそのものの因果効果ではなく、LIPG Asn396SerやHDL-C遺伝スコアがHDL-C以外の経路でMIに影響する水平的多面発現によって生じている。\n     判定: survive\n  H4: HDL-C遺伝スコアはHDL-Cを上げるが、MIリスクには影響しない（HDL-C上昇→MI低下の因果経路は存在しない）。\n     判定: reject\n\n結論の強さ: weak\n\n【タスク】\n分析Aの各仮説について、分析Bの中に同じ因果的主張を述べている仮説があるかを判定してください。\n\n「同じ因果的主張」とは、処置（原因）と結果の方向が一致しており、本質的に同じことを主張していることを意味します。表現の違いや詳細度の違いは無視してください。\n\n判定の一致は、分析Bの判定が分析Aの「許容される判定」リストのいずれかに含まれていればtrue、そうでなければfalseとします。対応する仮説が見つからない場合（matched_b_id が null）は decision_match を false にしてください。\n\n以下のJSON形式で回答してください。\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"...\",\n      \"matched_b_id\": \"H1 or null\",\n      \"matched_b_statement\": \"...\",\n      \"match_confidence\": \"high/medium/low\",\n      \"match_reasoning\": \"なぜ同じ主張と判断したか（1文）\",\n      \"a_acceptable\": [\"survive\", \"hold\"],\n      \"b_decision\": \"survive or null\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"分析Bにあるが分析Aに対応がない仮説のID\"]\n}\n\nJSONのみを返してください。\n",
+  "raw_response": "```json\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"HDL-C上昇は心筋梗塞リスクを因果的に低下させる（HDL仮説）\",\n      \"matched_b_id\": \"H1\",\n      \"matched_b_statement\": \"遺伝的にHDL-Cが高いことは、MIリスクを因果的に低下させる（HDL-C上昇→MI低下の方向効果がある）。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方の仮説はHDL-C上昇がMIリスクを低下させる因果効果を主張している。\",\n      \"a_acceptable\": [\"reject\"],\n      \"b_decision\": \"reject\",\n      \"decision_match\": true\n    },\n    {\n      \"analysis_a_id\": \"G2\",\n      \"analysis_a_statement\": \"HDL-Cと心筋梗塞の観察的逆相関は、LDL-Cやトリグリセリドとの交差多面発現による見かけの関連である\",\n      \"matched_b_id\": \"H3\",\n      \"matched_b_statement\": \"観察されるHDL-CとMIの逆相関は、HDL-Cそのものの因果効果ではなく、LIPG Asn396SerやHDL-C遺伝スコアがHDL-C以外の経路でMIに影響する水平的多面発現によって生じている。\",\n      \"match_confidence\": \"medium\",\n      \"match_reasoning\": \"両方の仮説はHDL-CとMIの逆相関が他の要因によるものであることを主張している。\",\n      \"a_acceptable\": [\"survive\"],\n      \"b_decision\": \"survive\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a_acceptable\": [\"strong\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": false,\n  \"unmatched_b_hypotheses\": [\"H2\", \"H4\"]\n}\n```",
+  "parsed": {
+    "matches": [
+      {
+        "analysis_a_id": "G1",
+        "analysis_a_statement": "HDL-C上昇は心筋梗塞リスクを因果的に低下させる（HDL仮説）",
+        "matched_b_id": "H1",
+        "matched_b_statement": "遺伝的にHDL-Cが高いことは、MIリスクを因果的に低下させる（HDL-C上昇→MI低下の方向効果がある）。",
+        "match_confidence": "high",
+        "match_reasoning": "両方の仮説はHDL-C上昇がMIリスクを低下させる因果効果を主張している。",
+        "a_acceptable": [
+          "reject"
+        ],
+        "b_decision": "reject",
+        "decision_match": true
+      },
+      {
+        "analysis_a_id": "G2",
+        "analysis_a_statement": "HDL-Cと心筋梗塞の観察的逆相関は、LDL-Cやトリグリセリドとの交差多面発現による見かけの関連である",
+        "matched_b_id": "H3",
+        "matched_b_statement": "観察されるHDL-CとMIの逆相関は、HDL-Cそのものの因果効果ではなく、LIPG Asn396SerやHDL-C遺伝スコアがHDL-C以外の経路でMIに影響する水平的多面発現によって生じている。",
+        "match_confidence": "medium",
+        "match_reasoning": "両方の仮説はHDL-CとMIの逆相関が他の要因によるものであることを主張している。",
+        "a_acceptable": [
+          "survive"
+        ],
+        "b_decision": "survive",
+        "decision_match": true
+      }
+    ],
+    "strength_a_acceptable": [
+      "strong"
+    ],
+    "strength_b": "weak",
+    "strength_match": false,
+    "unmatched_b_hypotheses": [
+      "H2",
+      "H4"
+    ]
+  },
+  "summary": {
+    "gold_count": 2,
+    "matched": 2,
+    "agreed": 2,
+    "disagreed": 0,
+    "absent": 0,
+    "strength_match": false,
+    "agreement_rate": "2/2"
+  }
+}

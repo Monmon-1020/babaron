@@ -1,0 +1,68 @@
+{
+  "case_id": "orben_przybylski_2019",
+  "method": "rubric_only",
+  "run_file": "outputs/run_4cond_rubric_only_orben_przybylski_2019_v3.jsonl",
+  "prompt": "あなたは二つの因果推論分析結果を比較する評価者です。\n研究の背景や目的は知る必要はありません。\n純粋に、二つの分析が同じ因果的主張について同じ判定をしているかを比較してください。\n\n【分析A】（参照分析）\n以下の仮説と「許容される判定（acceptable_decisions）」が与えられています。\n分析Bの判定がこの許容リストに含まれていれば一致とみなします。\n\n  G1: デジタルテクノロジー利用は青少年の幸福感に実質的な負の因果効果を持つ\n     許容される判定: ['reject']\n  G2: デジタルテクノロジー利用と幸福感の関連は存在するが、実質的に無視できるほど小さい\n     許容される判定: ['survive', 'hold']\n  G3: 関連の大きさは分析仕様（変数の操作化、サンプル選択等）に依存する\n     許容される判定: ['survive']\n\n結論の強さの許容範囲: ['weak']\n\n【分析B】（評価対象）\n以下の仮説と判定が与えられています。\n\n  H1: デジタルテクノロジー使用量が高いほど、思春期の幸福感は低いという負の関連が存在する。\n     判定: hold\n  H2: デジタルテクノロジー使用と幸福感の関連は存在しても、その大きさは実質的に小さく、政策的・実務的意義を持つ閾値を超えない（例：η²p ≤ 0.01程度）。\n     判定: survive\n  H3: デジタルテクノロジー使用と幸福感の見かけの関連は、主として測定・報告方法や統制変数の選択に依存するアーティファクトであり、親報告やより厳密な統制を入れると関連は消失または大幅に縮小する。\n     判定: survive\n  H4: デジタルテクノロジー使用と幸福感の関連は、データセットや測定指標によって一貫せず、米国データと英国データ、あるいはスクリーンタイム・SNS・インターネット使用などの指標間で再現性が低い。\n     判定: hold\n\n結論の強さ: weak\n\n【タスク】\n分析Aの各仮説について、分析Bの中に同じ因果的主張を述べている仮説があるかを判定してください。\n\n「同じ因果的主張」とは、処置（原因）と結果の方向が一致しており、本質的に同じことを主張していることを意味します。表現の違いや詳細度の違いは無視してください。\n\n判定の一致は、分析Bの判定が分析Aの「許容される判定」リストのいずれかに含まれていればtrue、そうでなければfalseとします。対応する仮説が見つからない場合（matched_b_id が null）は decision_match を false にしてください。\n\n以下のJSON形式で回答してください。\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"...\",\n      \"matched_b_id\": \"H1 or null\",\n      \"matched_b_statement\": \"...\",\n      \"match_confidence\": \"high/medium/low\",\n      \"match_reasoning\": \"なぜ同じ主張と判断したか（1文）\",\n      \"a_acceptable\": [\"survive\", \"hold\"],\n      \"b_decision\": \"survive or null\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"分析Bにあるが分析Aに対応がない仮説のID\"]\n}\n\nJSONのみを返してください。\n",
+  "raw_response": "```json\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"デジタルテクノロジー利用は青少年の幸福感に実質的な負の因果効果を持つ\",\n      \"matched_b_id\": \"H1\",\n      \"matched_b_statement\": \"デジタルテクノロジー使用量が高いほど、思春期の幸福感は低いという負の関連が存在する。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方ともデジタルテクノロジーの使用が幸福感に負の影響を与えると主張している。\",\n      \"a_acceptable\": [\"reject\"],\n      \"b_decision\": \"hold\",\n      \"decision_match\": false\n    },\n    {\n      \"analysis_a_id\": \"G2\",\n      \"analysis_a_statement\": \"デジタルテクノロジー利用と幸福感の関連は存在するが、実質的に無視できるほど小さい\",\n      \"matched_b_id\": \"H2\",\n      \"matched_b_statement\": \"デジタルテクノロジー使用と幸福感の関連は存在しても、その大きさは実質的に小さく、政策的・実務的意義を持つ閾値を超えない（例：η²p ≤ 0.01程度）。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方とも関連が小さく実質的に無視できると主張している。\",\n      \"a_acceptable\": [\"survive\", \"hold\"],\n      \"b_decision\": \"survive\",\n      \"decision_match\": true\n    },\n    {\n      \"analysis_a_id\": \"G3\",\n      \"analysis_a_statement\": \"関連の大きさは分析仕様（変数の操作化、サンプル選択等）に依存する\",\n      \"matched_b_id\": \"H4\",\n      \"matched_b_statement\": \"デジタルテクノロジー使用と幸福感の関連は、データセットや測定指標によって一貫せず、米国データと英国データ、あるいはスクリーンタイム・SNS・インターネット使用などの指標間で再現性が低い。\",\n      \"match_confidence\": \"medium\",\n      \"match_reasoning\": \"両方とも関連の大きさが分析仕様に依存することを示唆している。\",\n      \"a_acceptable\": [\"survive\"],\n      \"b_decision\": \"hold\",\n      \"decision_match\": false\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"H3\"]\n}\n```",
+  "parsed": {
+    "matches": [
+      {
+        "analysis_a_id": "G1",
+        "analysis_a_statement": "デジタルテクノロジー利用は青少年の幸福感に実質的な負の因果効果を持つ",
+        "matched_b_id": "H1",
+        "matched_b_statement": "デジタルテクノロジー使用量が高いほど、思春期の幸福感は低いという負の関連が存在する。",
+        "match_confidence": "high",
+        "match_reasoning": "両方ともデジタルテクノロジーの使用が幸福感に負の影響を与えると主張している。",
+        "a_acceptable": [
+          "reject"
+        ],
+        "b_decision": "hold",
+        "decision_match": false
+      },
+      {
+        "analysis_a_id": "G2",
+        "analysis_a_statement": "デジタルテクノロジー利用と幸福感の関連は存在するが、実質的に無視できるほど小さい",
+        "matched_b_id": "H2",
+        "matched_b_statement": "デジタルテクノロジー使用と幸福感の関連は存在しても、その大きさは実質的に小さく、政策的・実務的意義を持つ閾値を超えない（例：η²p ≤ 0.01程度）。",
+        "match_confidence": "high",
+        "match_reasoning": "両方とも関連が小さく実質的に無視できると主張している。",
+        "a_acceptable": [
+          "survive",
+          "hold"
+        ],
+        "b_decision": "survive",
+        "decision_match": true
+      },
+      {
+        "analysis_a_id": "G3",
+        "analysis_a_statement": "関連の大きさは分析仕様（変数の操作化、サンプル選択等）に依存する",
+        "matched_b_id": "H4",
+        "matched_b_statement": "デジタルテクノロジー使用と幸福感の関連は、データセットや測定指標によって一貫せず、米国データと英国データ、あるいはスクリーンタイム・SNS・インターネット使用などの指標間で再現性が低い。",
+        "match_confidence": "medium",
+        "match_reasoning": "両方とも関連の大きさが分析仕様に依存することを示唆している。",
+        "a_acceptable": [
+          "survive"
+        ],
+        "b_decision": "hold",
+        "decision_match": false
+      }
+    ],
+    "strength_a_acceptable": [
+      "weak"
+    ],
+    "strength_b": "weak",
+    "strength_match": true,
+    "unmatched_b_hypotheses": [
+      "H3"
+    ]
+  },
+  "summary": {
+    "gold_count": 3,
+    "matched": 3,
+    "agreed": 1,
+    "disagreed": 2,
+    "absent": 0,
+    "strength_match": true,
+    "agreement_rate": "1/3"
+  }
+}
