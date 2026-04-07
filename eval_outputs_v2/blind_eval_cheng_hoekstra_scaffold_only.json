@@ -1,0 +1,69 @@
+{
+  "case_id": "cheng_hoekstra",
+  "method": "scaffold_only",
+  "run_file": "outputs/run_4cond_scaffold_only_cheng_hoekstra.jsonl",
+  "prompt": "あなたは二つの因果推論分析結果を比較する評価者です。\n研究の背景や目的は知る必要はありません。\n純粋に、二つの分析が同じ因果的主張について同じ判定をしているかを比較してください。\n\n【分析A】（参照分析）\n以下の仮説と判定が与えられています。\n\n  G1: Castle Doctrine法の採用は殺人・過失致死を増加させる\n     判定: survive\n  G2: Castle Doctrine法は暴力犯罪（窃盗・強盗・加重暴行）を抑止する\n     判定: reject\n  G3: 推定された殺人増加はTWFE推定量の方法論的問題（負のウェイト、時間的異質性）による見かけの効果である\n     判定: hold\n\n結論の強さ: weak\n\n【分析B】（評価対象）\n以下の仮説と判定が与えられています。\n\n  H1: Castle Doctrine法の採用は、正当防衛の法的保護を強めることで潜在的加害者の期待コストを上げ、暴力犯罪全般を抑止し、殺人・過失致死を減少させる。\n     判定: reject\n  H2: Castle Doctrine法の採用は、武装・対抗エスカレーションを促し、正当防衛の名目での致死的応酬を増やすため、殺人・過失致死を増加させる一方、非致死的な暴力犯罪には小さいか不明確な影響しか与えない。\n     判定: survive\n  H3: Castle Doctrine法の採用は、抑止効果とエスカレーション効果を同時に持つが、時間とともに構成が変化する。短期には抑止が優勢で暴力犯罪が減少し、長期には武装化・対抗行動の増加により殺人が増加する。\n     判定: hold\n\n結論の強さ: weak\n\n【タスク】\n分析Aの各仮説について、分析Bの中に同じ因果的主張を述べている仮説があるかを判定してください。\n\n「同じ因果的主張」とは、処置（原因）と結果の方向が一致しており、本質的に同じことを主張していることを意味します。表現の違いや詳細度の違いは無視してください。\n\n以下のJSON形式で回答してください。\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"...\",\n      \"matched_b_id\": \"H1 or null\",\n      \"matched_b_statement\": \"...\",\n      \"match_confidence\": \"high/medium/low\",\n      \"match_reasoning\": \"なぜ同じ主張と判断したか（1文）\",\n      \"a_decision\": \"survive\",\n      \"b_decision\": \"survive or null\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a\": \"weak\",\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"分析Bにあるが分析Aに対応がない仮説のID\"]\n}\n\nJSONのみを返してください。\n",
+  "raw_response": "```json\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"Castle Doctrine法の採用は殺人・過失致死を増加させる\",\n      \"matched_b_id\": \"H2\",\n      \"matched_b_statement\": \"Castle Doctrine法の採用は、武装・対抗エスカレーションを促し、正当防衛の名目での致死的応酬を増やすため、殺人・過失致死を増加させる一方、非致死的な暴力犯罪には小さいか不明確な影響しか与えない。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方の仮説がCastle Doctrine法の採用が殺人・過失致死を増加させると主張しているため。\",\n      \"a_decision\": \"survive\",\n      \"b_decision\": \"survive\",\n      \"decision_match\": true\n    },\n    {\n      \"analysis_a_id\": \"G2\",\n      \"analysis_a_statement\": \"Castle Doctrine法は暴力犯罪（窃盗・強盗・加重暴行）を抑止する\",\n      \"matched_b_id\": \"H1\",\n      \"matched_b_statement\": \"Castle Doctrine法の採用は、正当防衛の法的保護を強めることで潜在的加害者の期待コストを上げ、暴力犯罪全般を抑止し、殺人・過失致死を減少させる。\",\n      \"match_confidence\": \"medium\",\n      \"match_reasoning\": \"両方の仮説がCastle Doctrine法が暴力犯罪を抑止するという主張を含んでいるため。\",\n      \"a_decision\": \"reject\",\n      \"b_decision\": \"reject\",\n      \"decision_match\": true\n    },\n    {\n      \"analysis_a_id\": \"G3\",\n      \"analysis_a_statement\": \"推定された殺人増加はTWFE推定量の方法論的問題（負のウェイト、時間的異質性）による見かけの効果である\",\n      \"matched_b_id\": \"H3\",\n      \"matched_b_statement\": \"Castle Doctrine法の採用は、抑止効果とエスカレーション効果を同時に持つが、時間とともに構成が変化する。短期には抑止が優勢で暴力犯罪が減少し、長期には武装化・対抗行動の増加により殺人が増加する。\",\n      \"match_confidence\": \"low\",\n      \"match_reasoning\": \"両方の仮説が時間的な変化や方法論的な問題に関連しているが、直接的な一致は弱い。\",\n      \"a_decision\": \"hold\",\n      \"b_decision\": \"hold\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a\": \"weak\",\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": []\n}\n```",
+  "parsed": {
+    "matches": [
+      {
+        "analysis_a_id": "G1",
+        "analysis_a_statement": "Castle Doctrine法の採用は殺人・過失致死を増加させる",
+        "matched_b_id": "H2",
+        "matched_b_statement": "Castle Doctrine法の採用は、武装・対抗エスカレーションを促し、正当防衛の名目での致死的応酬を増やすため、殺人・過失致死を増加させる一方、非致死的な暴力犯罪には小さいか不明確な影響しか与えない。",
+        "match_confidence": "high",
+        "match_reasoning": "両方の仮説がCastle Doctrine法の採用が殺人・過失致死を増加させると主張しているため。",
+        "a_decision": "survive",
+        "b_decision": "survive",
+        "decision_match": true,
+        "a_acceptable": [
+          "survive"
+        ]
+      },
+      {
+        "analysis_a_id": "G2",
+        "analysis_a_statement": "Castle Doctrine法は暴力犯罪（窃盗・強盗・加重暴行）を抑止する",
+        "matched_b_id": "H1",
+        "matched_b_statement": "Castle Doctrine法の採用は、正当防衛の法的保護を強めることで潜在的加害者の期待コストを上げ、暴力犯罪全般を抑止し、殺人・過失致死を減少させる。",
+        "match_confidence": "medium",
+        "match_reasoning": "両方の仮説がCastle Doctrine法が暴力犯罪を抑止するという主張を含んでいるため。",
+        "a_decision": "reject",
+        "b_decision": "reject",
+        "decision_match": true,
+        "a_acceptable": [
+          "reject"
+        ]
+      },
+      {
+        "analysis_a_id": "G3",
+        "analysis_a_statement": "推定された殺人増加はTWFE推定量の方法論的問題（負のウェイト、時間的異質性）による見かけの効果である",
+        "matched_b_id": "H3",
+        "matched_b_statement": "Castle Doctrine法の採用は、抑止効果とエスカレーション効果を同時に持つが、時間とともに構成が変化する。短期には抑止が優勢で暴力犯罪が減少し、長期には武装化・対抗行動の増加により殺人が増加する。",
+        "match_confidence": "low",
+        "match_reasoning": "両方の仮説が時間的な変化や方法論的な問題に関連しているが、直接的な一致は弱い。",
+        "a_decision": "hold",
+        "b_decision": "hold",
+        "decision_match": false,
+        "a_acceptable": [
+          "reject"
+        ]
+      }
+    ],
+    "strength_a": "weak",
+    "strength_b": "weak",
+    "strength_match": false,
+    "unmatched_b_hypotheses": [],
+    "strength_a_acceptable": [
+      "strong"
+    ]
+  },
+  "summary": {
+    "gold_count": 3,
+    "matched": 3,
+    "agreed": 2,
+    "disagreed": 1,
+    "absent": 0,
+    "strength_match": false,
+    "agreement_rate": "2/3"
+  }
+}

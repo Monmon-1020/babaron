@@ -1,0 +1,154 @@
+{
+  "ng_counts": {
+    "scaffold_only": {
+      "S1-CHK": {
+        "total_ng": 0,
+        "cases": []
+      },
+      "S2-CHK": {
+        "total_ng": 0,
+        "cases": []
+      },
+      "S3-CHK": {
+        "total_ng": 1,
+        "cases": [
+          "web_browsing_mood"
+        ]
+      }
+    },
+    "proposed": {
+      "S1-CHK": {
+        "total_ng": 1,
+        "cases": [
+          "voight_hdl"
+        ]
+      },
+      "S2-CHK": {
+        "total_ng": 0,
+        "cases": []
+      },
+      "S3-CHK": {
+        "total_ng": 4,
+        "cases": [
+          "web_browsing_mood",
+          "cheng_hoekstra"
+        ]
+      }
+    }
+  },
+  "issue_classification": {
+    "scaffold_only": {
+      "general_quality": 0,
+      "causal_specific": 1,
+      "examples": [
+        {
+          "case": "web_browsing_mood",
+          "stage": "S3-CHK",
+          "category": "causal_specific",
+          "issue": "S3: 主要未観測があるため strength=strong は不可です。"
+        }
+      ]
+    },
+    "proposed": {
+      "general_quality": 9,
+      "causal_specific": 4,
+      "examples": [
+        {
+          "case": "web_browsing_mood",
+          "stage": "S3-CHK",
+          "category": "general_quality",
+          "issue": "S3: H2 の条件一致フラグはちょうど1つだけ true にしてください。"
+        },
+        {
+          "case": "web_browsing_mood",
+          "stage": "S3-CHK",
+          "category": "general_quality",
+          "issue": "S3: H2 は survive なのに条件一致フラグが不整合です。"
+        },
+        {
+          "case": "web_browsing_mood",
+          "stage": "S3-CHK",
+          "category": "general_quality",
+          "issue": "S3: H4 の条件一致フラグはちょうど1つだけ true にしてください。"
+        },
+        {
+          "case": "web_browsing_mood",
+          "stage": "S3-CHK",
+          "category": "general_quality",
+          "issue": "S3: H4 は survive なのに条件一致フラグが不整合です。"
+        },
+        {
+          "case": "web_browsing_mood",
+          "stage": "S3-CHK",
+          "category": "general_quality",
+          "issue": "S3: H2 は survive なのに条件一致フラグが不整合です。"
+        },
+        {
+          "case": "web_browsing_mood",
+          "stage": "S3-CHK",
+          "category": "general_quality",
+          "issue": "S3: H4 は survive なのに条件一致フラグが不整合です。"
+        },
+        {
+          "case": "cheng_hoekstra",
+          "stage": "S3-CHK",
+          "category": "causal_specific",
+          "issue": "H2のdecisionがsurviveになっているが、S2の判定規則では『採用後に殺人率が上昇し、閾値超過かつ95%CIが0を跨がない』場合にacceptであり、弱い支持ならholdが妥当です。さらに identification_assumption_concerns に IA1/IA5/IA6 の不確実性があり、strength=weak と整合させる必要があります。decision語彙と判定"
+        },
+        {
+          "case": "cheng_hoekstra",
+          "stage": "S3-CHK",
+          "category": "general_quality",
+          "issue": "which_hypotheses_survive が ['H2'] である一方、H2 の decision は survive ですが、S2の規則上は accept/hold/reject のいずれかで表現すべきで、survive が判定表の状態語として固定規則と不整合です。"
+        }
+      ]
+    }
+  },
+  "designer_changes": {
+    "scaffold_only": {
+      "web_browsing_mood": {
+        "S3": {
+          "retries": 1,
+          "changes": [
+            {
+              "field": "strength",
+              "before": "strong",
+              "after": "weak"
+            }
+          ]
+        }
+      }
+    },
+    "proposed": {
+      "web_browsing_mood": {
+        "S3": {
+          "retries": 2,
+          "changes": [
+            {
+              "field": "H2.decision",
+              "before": "survive",
+              "after": "hold"
+            },
+            {
+              "field": "H4.decision",
+              "before": "survive",
+              "after": "hold"
+            }
+          ]
+        }
+      },
+      "cheng_hoekstra": {
+        "S3": {
+          "retries": 2,
+          "changes": [
+            {
+              "field": "H2.decision",
+              "before": "survive",
+              "after": "hold"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

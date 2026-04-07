@@ -1,465 +1,399 @@
-# 包括的実験結果レポート
+# ブラインド評価の再実行指示書（Gold Standard 改訂版）
 
-## 1. 実験設計
+## 背景
 
-### 4条件の2×2デザイン
+Deep Research による6ケース全ての後続文献調査に基づき、gold standard を全面改訂した。
+主要な変更点は以下。
 
-|  | Supervisorなし | Supervisorあり |
-|--|--------------|-------------|
-| **Rubricなし** | `baseline` | `scaffold_only` |
-| **Rubricあり** | `rubric_only` | `proposed` |
+1. Cheng & Hoekstra: strength を weak → **strong** に変更。H3 を hold → **reject** に変更
+2. Voight et al.: strength を weak → **strong** に変更
+3. Orben: H1 を hold → **reject** に変更
+4. 複数ケースで「許容範囲」を導入（survive と hold の両方を正解とする仮説がある）
+5. Kelly & Sharot: gold standard の根拠が方法論的原則であることを明記
 
-### 各条件の構成
-
-| 条件 | Designer prompt | Supervisor | Mechanical Checks | JSON Schema |
-|------|----------------|-----------|-------------------|------------|
-| baseline | baseline_designer_s1〜s3 (汎用) | なし | なし | 基本 |
-| scaffold_only | baseline_designer_s1〜s3 (汎用) | scaffold_supervisor (汎用) | あり（基本） | 基本 |
-| rubric_only | rubric_designer_s1〜s3 (rubric埋め込み) | なし | なし | 拡張 |
-| proposed | rubric_designer_s1〜s3 (rubric埋め込み) | rubric_supervisor (rubric対応) | あり（拡張） | 拡張 |
-
-### 評価対象ケース（6つ）
-
-| ケース | 因果推論手法 | 論文の特徴 |
-|------|-----------|----------|
-| Kelly & Sharot (2025) | 観察+実験 | 双方向因果（コンテンツ↔気分） |
-| Orben & Przybylski (2019) | Specification Curve Analysis | 効果は極めて小さい |
-| Twenge et al. (2018) | 横断+時系列 | 出来の良い論文 |
-| Cheng & Hoekstra (2013) | staggered TWFE DiD | 推定量の方法論的問題 |
-| Voight et al. (2012) | Mendelian Randomization | 帰無結果 |
-| Chen et al. (2013) | 地理的RDD | 多項式仕様への感度 |
-
-### モデル
-- 実験: gpt-5.4-mini, temperature=0.0
-- ブラインド評価: gpt-4o（実験と異なるモデル）, temperature=0.0
+これに基づき、blind_eval.py と gold_standards.json を更新し、全24件の評価を再実行する。
 
 ---
 
-## 2. プロトコルの3層構造
+## 手順1: gold_standards.json を以下の内容で上書きする
 
-```
-Layer 1: Process-level Protocol
-  S0 (推定対象・スコープの固定) ← cases.jsonから提供
-    ↓
-  S1 (競合仮説の構造化) ⇄ S1-CHK (Supervisor)
-    ↓
-  S2 (実験計画・判定規則の事前固定) ⇄ S2-CHK (Supervisor)
-    ↓
-  S2-EVID (エビデンス投入) ← cases.jsonから提供
-    ↓
-  S3 (結論の導出・段階づけ) ⇄ S3-CHK (Supervisor)
-
-Layer 2: Operationalized Rubric
-  各段階の出力を Explicit / Partial / Absent で評価
-
-Layer 3: Audit Implementation
-  機械的チェック（決定論的整合性検証）
-  + Supervisor（LLMによる内容監査）
+```json
+{
+  "web_browsing_mood": {
+    "case_label": "Kelly & Sharot (2025)",
+    "gold_basis": "methodological_principles",
+    "gold_basis_note": "出版後16ヶ月でStudy 3の識別仮定を検討した査読付き後続文献なし。因果推論の方法論的原則に基づいて定義",
+    "hypotheses": [
+      {
+        "id": "G1",
+        "statement": "ネガティブなウェブコンテンツの閲覧は気分を悪化させる（コンテンツ→気分の因果効果）",
+        "expected_decision": "survive",
+        "acceptable_decisions": ["survive"],
+        "source": "Study 2のランダム割付実験により支持。批判的後続文献なし"
+      },
+      {
+        "id": "G2",
+        "statement": "気分の悪化はネガティブなウェブコンテンツの閲覧を増加させる（気分→コンテンツの因果効果）",
+        "expected_decision": "survive",
+        "acceptable_decisions": ["survive", "hold"],
+        "source": "Study 3の媒介分析で示唆。ただし識別仮定（処置→結果の直接効果なし）の妥当性が未検証。Pearl (2014), VanderWeele (2015)により媒介分析の識別仮定は一般に強い仮定"
+      },
+      {
+        "id": "G3",
+        "statement": "閲覧と気分の関連は第三要因（精神病理傾向等）による見かけの相関であり、直接の因果効果はない",
+        "expected_decision": "reject",
+        "acceptable_decisions": ["reject"],
+        "source": "Study 2-3のランダム割付により短期的な直接効果が確認されている"
+      }
+    ],
+    "expected_strength": "weak",
+    "acceptable_strengths": ["weak"],
+    "strength_source": "H2の因果方向に識別仮定の懸念が未解消。双方向因果の主張全体としてはweak"
+  },
+  "orben_przybylski_2019": {
+    "case_label": "Orben & Przybylski (2019)",
+    "gold_basis": "subsequent_literature",
+    "gold_basis_note": "Twenge et al. (2020) Matters Arising、Twenge et al. (2022) 再分析、Orben et al. (2022) 著者修正、Vuorre & Przybylski (2024) 大規模追試",
+    "hypotheses": [
+      {
+        "id": "G1",
+        "statement": "デジタルテクノロジー利用は青少年の幸福感に実質的な負の因果効果を持つ",
+        "expected_decision": "reject",
+        "acceptable_decisions": ["reject"],
+        "source": "Vuorre & Przybylski (2024): 168カ国200万人で小さく一貫しない関連。Allcott et al. (2020, AER): Facebook停止実験で0.09SD。全体として実質的な因果効果は否定的"
+      },
+      {
+        "id": "G2",
+        "statement": "デジタルテクノロジー利用と幸福感の関連は存在するが、実質的に無視できるほど小さい",
+        "expected_decision": "survive",
+        "acceptable_decisions": ["survive", "hold"],
+        "source": "平均0.4%は再現。しかしTwenge et al. (2022, Acta Psychologica): 女子×SNSでβ=−0.20に上昇。Orben et al. (2022, Nature Communications): 年齢・性別特異的感受性窓を報告。無意味という強い主張は修正が必要"
+      },
+      {
+        "id": "G3",
+        "statement": "関連の大きさは分析仕様（変数の操作化、サンプル選択等）に依存する",
+        "expected_decision": "survive",
+        "acceptable_decisions": ["survive"],
+        "source": "最も頑健に確立された知見。Orben自身のSCA、Twenge et al. (2022)の再分析が直接確認"
+      }
+    ],
+    "expected_strength": "weak",
+    "acceptable_strengths": ["weak"],
+    "strength_source": "因果方向は横断データで未同定。サブグループ異質性が発見され無意味とは断定できなくなった"
+  },
+  "twenge_2018": {
+    "case_label": "Twenge, Martin & Campbell (2018)",
+    "gold_basis": "subsequent_literature",
+    "gold_basis_note": "Heffer et al. (2019) 明示的反論、Jensen et al. (2019) 縦断+EMA、Coyne et al. (2020) 8年縦断、Odgers & Jensen (2020) 包括的レビュー、Odgers (2024) Haidt批評",
+    "hypotheses": [
+      {
+        "id": "G1",
+        "statement": "スクリーンタイムの増加は青少年の幸福感低下の原因である",
+        "expected_decision": "hold",
+        "acceptable_decisions": ["survive", "hold"],
+        "source": "Heffer et al. (2019): 縦断でSNS→抑うつの前方予測なし。Jensen et al. (2019): 縦断+EMAで関連なし。Coyne et al. (2020): 個人内変化として予測力なし。ただしHaidt (2024)は因果主張を展開し完全棄却はされていない"
+      },
+      {
+        "id": "G2",
+        "statement": "幸福感低下は経済的要因や他の時代的変化で説明できる",
+        "expected_decision": "survive",
+        "acceptable_decisions": ["survive", "hold"],
+        "source": "McGorry et al. (2025, Frontiers in Psychiatry): 経済不安定、教育圧力、気候不安等の複合要因。多重決定の見方が支持"
+      },
+      {
+        "id": "G3",
+        "statement": "因果は逆方向：幸福感が低い青少年がスクリーンタイムを増やす",
+        "expected_decision": "survive",
+        "acceptable_decisions": ["survive"],
+        "source": "Heffer et al. (2019): 思春期女子で抑うつ→SNS使用増加を予測。Odgers & Jensen (2020): 逆因果の証拠の方が一貫"
+      }
+    ],
+    "expected_strength": "weak",
+    "acceptable_strengths": ["weak"],
+    "strength_source": "横断データからの因果推論は方法論的に不十分。大多数のレビューが強い因果主張には証拠不十分と結論。Odgers (2024, Nature)"
+  },
+  "cheng_hoekstra": {
+    "case_label": "Cheng & Hoekstra (2013)",
+    "gold_basis": "subsequent_literature",
+    "gold_basis_note": "McClellan & Tekin (2017) 独立再現、Humphreys et al. (2017) フロリダ分析、Degli Esposti et al. (2022) 最厳密追試、Yakubovich et al. (2021) 系統的レビュー、RAND (2024) 最高評価、Cunningham (2021) TWFEバイアス検証",
+    "hypotheses": [
+      {
+        "id": "G1",
+        "statement": "Castle Doctrine法の採用は殺人・過失致死を増加させる",
+        "expected_decision": "survive",
+        "acceptable_decisions": ["survive"],
+        "source": "McClellan & Tekin (2017, JHR): 独立データで約8%増再現。Degli Esposti et al. (2022, JAMA Network Open): 23州でIRR=1.08。RAND (2024): 最高評価supportive evidence。6つの高品質研究すべてが増加方向"
+      },
+      {
+        "id": "G2",
+        "statement": "Castle Doctrine法は暴力犯罪（窃盗・強盗・加重暴行）を抑止する",
+        "expected_decision": "reject",
+        "acceptable_decisions": ["reject"],
+        "source": "Yakubovich et al. (2021, AJPH): 25研究の系統的レビューで抑止の証拠なし。RAND (2024): 抑止を支持するエビデンスなし"
+      },
+      {
+        "id": "G3",
+        "statement": "推定された殺人増加はstaggered TWFE推定量の方法論的問題（負のウェイト、時間的異質性）による見かけの効果である",
+        "expected_decision": "reject",
+        "acceptable_decisions": ["reject"],
+        "source": "Cunningham (2021): このデータで検証し異質性バイアスの証拠はほとんどない。非TWFE手法でも同結果。RAND: バイアスの証拠をほとんど見出さなかった"
+      }
+    ],
+    "expected_strength": "strong",
+    "acceptable_strengths": ["strong"],
+    "strength_source": "複数の独立チーム、異なるデータ源（UCR, Vital Statistics）、異なる手法（DiD, interrupted time series, 合成コントロール, ベイズ）が約8%増に収束。RAND最高評価。銃政策文献で最も再現された知見の一つ"
+  },
+  "voight_hdl": {
+    "case_label": "Voight et al. (2012)",
+    "gold_basis": "subsequent_literature",
+    "gold_basis_note": "Holmes et al. (2015) 多面発現分析、Richardson et al. (2020) 多変量MR、Zuber et al. (2021) 確認、CETP阻害薬4剤の臨床試験、Holmes & Davey Smith (2017) Anacetrapib解釈",
+    "hypotheses": [
+      {
+        "id": "G1",
+        "statement": "HDL-C上昇は心筋梗塞リスクを因果的に低下させる（HDL仮説）",
+        "expected_decision": "reject",
+        "acceptable_decisions": ["reject"],
+        "source": "Holmes et al. (2015, EHJ): 制限付きスコアでシグナル消失。Richardson et al. (2020, PLOS Medicine): ApoB調整で帰無。CETP阻害薬3剤失敗。パラダイムがHDL-C上昇→ApoB低下に移行済み"
+      },
+      {
+        "id": "G2",
+        "statement": "HDL-Cと心筋梗塞の観察的逆相関は、LDL-Cやトリグリセリドとの交差多面発現による見かけの関連である",
+        "expected_decision": "survive",
+        "acceptable_decisions": ["survive"],
+        "source": "Holmes et al. (2015): 多面発現SNP除外でシグナル消失が直接証拠。Richardson et al. (2020): ApoB調整で帰無。Zuber et al. (2021): 確認"
+      }
+    ],
+    "expected_strength": "strong",
+    "acceptable_strengths": ["strong"],
+    "strength_source": "単変量MR、多変量MR、臨床試験の3種が収束。MRの最も成功した適用例。教科書的事例として広く引用"
+  },
+  "chen_huairiver": {
+    "case_label": "Chen et al. (2013)",
+    "gold_basis": "subsequent_literature",
+    "gold_basis_note": "Gelman & Zelizer (2015) 多項式批判、Gelman & Imbens (2019) 一般的方法論批判、Ebenstein et al. (2017) 元著者改訂、Fan et al. (2020) 独立確認、Pope & Dockery (2013) 疫学的評価",
+    "hypotheses": [
+      {
+        "id": "G1",
+        "statement": "粒子状大気汚染への長期曝露は平均寿命を短縮する",
+        "expected_decision": "survive",
+        "acceptable_decisions": ["survive"],
+        "source": "Ebenstein et al. (2017, PNAS): 改訂推定で方向維持（3.1年）。Fan et al. (2020): 時間的RDDで因果連鎖を独立確認。国際疫学と整合"
+      },
+      {
+        "id": "G2",
+        "statement": "推定された5.5年という効果の大きさは3次多項式の選択に駆動されたものであり、効果量の信頼性が低い",
+        "expected_decision": "survive",
+        "acceptable_decisions": ["survive"],
+        "source": "Gelman & Zelizer (2015): 線形で1.6年（非有意）。次数で大幅変動。91年の非現実的含意。元著者がEbenstein et al. (2017)で局所線形に切替え3.1年に改訂"
+      },
+      {
+        "id": "G3",
+        "statement": "淮河南北の平均寿命差は暖房政策以外の地域差（経済水準、医療アクセス等）で説明できる",
+        "expected_decision": "hold",
+        "acceptable_decisions": ["hold"],
+        "source": "共変量バランス等は実施済みだが淮河は中国の根本的南北境界であり完全統制困難。Pope & Dockery (2013)も効果量が米国推定より大きいことを指摘"
+      }
+    ],
+    "expected_strength": "weak",
+    "acceptable_strengths": ["weak"],
+    "strength_source": "因果の方向は支持されるが効果量が多項式仕様に大きく依存。改訂推定3.1年も米国推定の1.5-2倍"
+  }
+}
 ```
 
 ---
 
-## 3. 全フェーズのLLM出力（Kelly & Sharotを代表例として）
+## 手順2: blind_eval.py の判定ロジックを更新する
 
-### baseline条件
+現在の blind_eval.py は `expected_decision` との完全一致で判定しているはず。
+これを `acceptable_decisions` リストとの一致に変更する。
 
-#### S1: Designer出力
-```
-H1: ネガティブvalenceの閲覧 → 気分悪化（直接因果）
-   falsify: ネガティブvalence曝露が気分を低下させない場合
-H2: 気分悪化 → ネガティブ閲覧選択（逆方向因果）
-   falsify: 気分操作後の選択valenceが変化しない場合
-H3: 双方向フィードバック（H1+H2）
-   falsify: いずれか一方向が再現されない場合
-H4: 感情ラベル介入による気分改善
-   falsify: 介入が選択分布も気分も変えない場合
+具体的には、以下の箇所を修正する。
 
-hypothesis_relations:
-  H1-H2: independent
-  H1-H3: nested
-  H1-H4: independent
+**変更前（想定）:**
+```python
+decision_match = (b_decision == gold_hyp["expected_decision"])
 ```
 
-#### S2: Designer出力
-```
-hypothesis_rules:
-  H1: accept=ネガティブ条件群の気分が中立群より低下
-      reject=差がないか方向が逆
-  H2: accept=低気分後にネガティブ選択増加
-      reject=気分状態と選択に関係なし
-  H3: 双方向クロスラグ効果
-  H4: ラベル群でネガティブ選択減少+気分改善
-
-identification_assumptions:
-  IA1: ランダム割付による交絡均衡
-  IA2: 短期気分測定が閲覧効果を反映
-  IA3: 気分操作が選択に直接影響しない
+**変更後:**
+```python
+acceptable = gold_hyp.get("acceptable_decisions", [gold_hyp["expected_decision"]])
+decision_match = (b_decision in acceptable)
 ```
 
-#### S3: Designer出力
-```
-H1: survive (E3, E4)
-H2: survive (E2, E5)
-H3: survive (E2, E3, E4, E5)
-H4: survive (E6, E7)
+strength についても同様：
 
-survive: ['H1','H2','H3','H4']
-rejected: []
-strength: STRONG  ← 全仮説surviveで過剰断定
+**変更前:**
+```python
+strength_match = (output_strength == gold["expected_strength"])
 ```
 
-#### Supervisor: なし
-#### Mechanical Checks: なし
-#### Retries: 0
+**変更後:**
+```python
+acceptable_strengths = gold.get("acceptable_strengths", [gold["expected_strength"]])
+strength_match = (output_strength in acceptable_strengths)
+```
 
 ---
 
-### scaffold_only条件
+## 手順3: 全24件のブラインド評価を再実行する
 
-#### S1: Designer出力（baselineと同じプロンプト）
-仮説構造はbaselineとほぼ同じ（H1-H4、双方向フィードバックを含む）
-
-#### S1-CHK: Supervisor出力
-```
-verdict: OK
-fatal_issues: []
+```bash
+python blind_eval.py --model gpt-4o --out eval_outputs_v2/
 ```
 
-#### S2: 同様
-
-#### S2-CHK: OK
-
-#### S3: Designer出力
-```
-H1: survive, H2: survive, H3: survive, H4: survive
-strength: weak  ← scaffoldにより過剰断定が抑制された
-```
-
-#### S3-CHK: OK
-#### Retries: 1 (S3)
+出力ディレクトリを `eval_outputs_v2/` に変更し、旧結果（eval_outputs/）と区別する。
 
 ---
 
-### rubric_only条件
+## 手順4: 結果のサマリを生成する
 
-#### S1: Designer出力（rubric埋め込みプロンプト）
-```
-H1: 双方向因果（H1自体がループ全体を主張）
-   falsify: ランダム実験で気分差が一貫して生じない、または
-            気分状態が選択に影響しない、いずれかが満たされれば棄却
-H2: コンテンツ→気分のみ（H1の特殊ケース）
-   falsify: 気分→選択が示されれば棄却
-H3: 気分→選択のみ（H1の別の特殊ケース）
-   falsify: 閲覧→気分が示されれば棄却
-H4: 共通原因による見かけの関連
-
-hypothesis_relations:
-  H1-H2: nested （H2はH1の特殊ケース）
-  H1-H3: nested
-  H2-H3: exclusive
-  H1-H4: exclusive
-  H2-H4: exclusive
-  H3-H4: exclusive
+```bash
+python blind_eval.py --summary eval_outputs_v2/
 ```
 
-**問題**: H1を「双方向ループ」と定義したため、H1がsurviveするには両方向の証拠が必要。Supervisor/Mechanical Checksがないためこの構造的問題が修正されない。
+以下の表を出力する。
 
-#### S2: Designer出力
-判定規則も双方向ループに依拠した複雑な構造
+### 表1: ケース別・条件別の一致率
 
-#### S3: Designer出力
-```
-H1: REJECT (双方向の証拠は両方あるがS2の厳密な再現性条件を満たさず)
-H2: REJECT (H2の否定条件「気分→選択あり」が満たされた)
-H3: REJECT (H3の否定条件「閲覧→気分あり」が満たされた)
-H4: REJECT (短期因果が実験で示されたためH4の主張に反する)
+| ケース | baseline | scaffold_only | rubric_only | proposed |
+|--------|----------|---------------|-------------|----------|
 
-survive: []
-rejected: ['H1','H2','H3','H4']
-strength: weak
-```
+各セルに「一致した仮説数/gold仮説数」と strength 一致を記載。
 
-**結果**: 全仮説が棄却される。これはrubric_onlyの最大の失敗例。
+### 表2: 条件別の集計
 
-#### Retries: 0
+| 条件 | 仮説一致数/全仮説数 | strength一致数/全ケース数 | 合計一致率 |
+|------|-------------------|------------------------|----------|
+
+### 表3: 許容範囲の効果
+
+許容範囲ありの仮説（Kelly H2, Orben H2, Twenge H1, Twenge H2）について、
+各条件がsurviveとholdのどちらを出したかの内訳。
 
 ---
 
-### proposed条件
+## 手順5: 評価Cのデータも合わせて集計する
 
-#### S1: Designer出力（rubric埋め込み + Supervisor監督）
+blind_eval とは別に、supervisor のログから以下を集計する。
+（新規スクリプト `supervisor_analysis.py` を作成するか、既存の集計に追加）
+
+### 集計するもの
+
+1. **NG回数の条件別・段階別集計**
+
+scaffold_only と proposed のそれぞれについて、
+S1-CHK, S2-CHK, S3-CHK でsupervisorがNGを出した回数を集計する。
+
 ```
-H1: コンテンツ→気分（方向の主張、効果量閾値を含む）
-H2: 気分→コンテンツ（方向の主張）
-H3: 一方向のみ（H1とH2のうち一方のみ成立、H2のexclusiveペア）
-H4: ラベル介入の効果
-
-hypothesis_relations:
-  H1-H2: independent  ← Kellyの双方向因果を正しく扱う
-  H1-H3: nested
-  H2-H3: exclusive  ← 一方向 vs 双方向
-  H1-H4: independent
-```
-
-#### S1-CHK: OK
-
-#### S2: Designer出力
-```
-H1: accept=|d|≥0.20 かつ η²≥0.01 かつ CI≠0
-H2: accept=気分→選択効果が再現性をもって示される
-H3: accept=H2が示されない（exclusive）
-H4: accept=ラベル群で選択分布変化+気分改善
-
-identification_assumptions:
-  IA1: ランダム割付（assumption + if_violated詳述）
-  IA2: 媒介効果の有無に関する仮定
-  IA3: SUTVA
+出力形式:
+{
+  "scaffold_only": {
+    "S1-CHK": {"total_ng": 2, "cases": ["web_browsing_mood", "orben"]},
+    "S2-CHK": {"total_ng": 1, "cases": ["cheng_hoekstra"]},
+    "S3-CHK": {"total_ng": 3, "cases": ["web_browsing_mood", "twenge", "chen"]}
+  },
+  "proposed": {
+    "S1-CHK": {"total_ng": 4, "cases": [...]},
+    "S2-CHK": {"total_ng": 3, "cases": [...]},
+    "S3-CHK": {"total_ng": 5, "cases": [...]}
+  }
+}
 ```
 
-#### S2-CHK: OK
+2. **NG理由の分類**
 
-#### S3: Designer出力（2回リトライ後）
+各NGについて、supervisorが出した `fatal_issues` のテキストを抽出し、
+以下の2カテゴリに分類する。
+
+- **一般的品質問題**: 文章の曖昧さ、論理矛盾、形式不備
+  （キーワード例: 曖昧、不明確、矛盾、形式、スキーマ）
+- **因果推論固有の問題**: 仮説間関係の誤り、識別仮定の不足、結論の過大評価、反証条件の不備
+  （キーワード例: hypothesis_relations, exclusive, independent, identification, 
+   識別仮定, 排他, 独立, strength, strong, 過剰断定, 反証）
+
+分類はキーワードマッチで自動化してよい。完全な正確性は不要で、
+大まかな傾向が見えればよい。
+
 ```
-H1: SURVIVE (E3, E4 — 効果量η²p=0.151)
-H2: SURVIVE (E2, E5 — 双方向独立判定)
-H3: REJECT (一方向仮説は両方向の証拠で棄却)
-H4: SURVIVE (E6, E7)
-
-relation_consistency_check:
-  H1-H2 (independent): 両方surviveは正常 ✓
-  H1-H3 (nested): H1 survive, H3 reject 整合 ✓
-  H2-H3 (exclusive): H2 survive, H3 reject 整合 ✓
-
-identification_assumption_concerns:
-  IA1: satisfied
-  IA2: uncertain (媒介効果の特定は範囲外)
-  IA3: satisfied
-
-residual_alternatives:
-  - 短期効果のみ確認
-  - オンラインサンプルの代表性
-  - 需要特性の可能性
-strength: weak
-strength_justification: 識別仮定IA2にuncertainがあるため
+出力形式:
+{
+  "scaffold_only": {
+    "general_quality": 4,
+    "causal_specific": 1,
+    "examples": [
+      {"case": "web_browsing_mood", "stage": "S3-CHK", "category": "general_quality",
+       "issue": "reasoning が冗長で簡潔性が不足"}
+    ]
+  },
+  "proposed": {
+    "general_quality": 3,
+    "causal_specific": 8,
+    "examples": [
+      {"case": "web_browsing_mood", "stage": "S1-CHK", "category": "causal_specific",
+       "issue": "hypothesis_relationsの宣言が不合理：独立であるべき仮説ペアがexclusiveと宣言されている"},
+      {"case": "web_browsing_mood", "stage": "S3-CHK", "category": "causal_specific",
+       "issue": "識別仮定にuncertainがあるのにstrength=strongは不可"}
+    ]
+  }
+}
 ```
 
-#### S3-CHK: OK
-#### Retries: 2 (S3でSupervisorが2回NG出した後通過)
+3. **修正前後の差の記録**
+
+supervisorがNGを出したケースについて、
+Designer の最初の出力（attempt=0）と最終出力（最後のsuccessful attempt）を比較し、
+何が変わったかを記録する。
+
+具体的には以下を比較する：
+- S1: 仮説数の変化、hypothesis_relations の変化
+- S2: identification_assumptions の数の変化
+- S3: strength の変化、各仮説のdecisionの変化
+
+```
+出力形式:
+{
+  "proposed": {
+    "web_browsing_mood": {
+      "S3": {
+        "retries": 2,
+        "changes": [
+          {"field": "strength", "before": "strong", "after": "weak"},
+          {"field": "H2.decision", "before": "survive", "after": "hold"}
+        ]
+      }
+    }
+  }
+}
+```
 
 ---
 
-## 4. 全6ケース × 4条件の最終判定一覧
+## 手順6: 全結果を一つのレポートにまとめる
 
-### Kelly & Sharot (web_browsing_mood)
-| method | H1 | H2 | H3 | H4 | strength |
-|--------|----|----|------|------|----------|
-| baseline | survive | survive | survive | survive | **strong** |
-| scaffold_only | survive | survive | survive | survive | weak |
-| rubric_only | reject | reject | reject | reject | weak |
-| **proposed** | survive | survive | reject | survive | weak |
+以下の構成で `eval_outputs_v2/evaluation_report.md` を作成する。
 
-### Orben & Przybylski (orben_przybylski_2019)
-| method | H1 | H2 | H3 | H4 | strength |
-|--------|----|----|------|------|----------|
-| baseline | reject | survive | survive | hold | weak |
-| scaffold_only | survive | survive | hold | hold | weak |
-| rubric_only | reject | survive | survive | — | weak |
-| **proposed** | survive | survive | survive | survive | weak |
+1. 評価方法の説明
+   - gold standard の定義方法（後続文献の合意 + Kelly のみ方法論的原則）
+   - ブラインドLLM突合の手順
+   - supervisor分析の手順
 
-### Twenge (twenge_2018)
-| method | H1 | H2 | H3 | strength |
-|--------|----|----|------|----------|
-| baseline | survive | reject | hold | weak |
-| scaffold_only | survive | reject | hold | weak |
-| rubric_only | survive | reject | hold | weak |
-| **proposed** | survive | reject | hold | weak |
+2. 評価A の結果（ブラインド突合による結論の妥当性）
+   - 表1, 表2, 表3
 
-### Cheng & Hoekstra (cheng_hoekstra)
-| method | H1 (殺人増加) | H2 (抑止) | H3 (TWFE) | strength |
-|--------|------------|---------|---------|----------|
-| baseline | hold | survive | hold | weak |
-| scaffold_only | survive | reject | hold | weak |
-| rubric_only | survive | reject | reject | weak |
-| **proposed** | survive | reject | hold | weak |
+3. 評価C の結果（supervisorの修正記録）
+   - NG回数の比較
+   - NG理由の分類
+   - 修正前後の変化の具体例
 
-(注: 仮説のラベリングはAIの出力に応じて調整。content-based)
-
-### Voight (voight_hdl)
-| method | H1 (HDL保護) | H2 (非因果) | H3 (排除制約破れ) | strength |
-|--------|------------|---------|---------|----------|
-| baseline | reject | survive | reject | weak |
-| scaffold_only | reject | survive | hold | weak |
-| rubric_only | reject | survive | survive | weak |
-| **proposed** | reject | survive | survive | weak |
-
-### Chen (chen_huairiver)
-| method | H1 (汚染→寿命) | H2 (多項式感度) | H3 (地域差) | strength |
-|--------|------------|---------|---------|----------|
-| baseline | hold | hold | hold | weak |
-| scaffold_only | survive | hold | hold | weak |
-| rubric_only | survive | reject | hold | weak |
-| **proposed** | survive | survive(H4) | hold | weak |
+4. 2つの評価の統合的解釈
 
 ---
 
-## 5. ブラインド評価結果（gpt-4oによる独立突合）
+## 注意事項
 
-### 評価方法
-- gpt-4oにgold standardの仮説（分析A）と各条件の出力（分析B）を提示
-- 研究背景・プロトコル名・どちらが正解かは伝えない
-- 各仮説について意味的対応と判定一致を判定させる
-
-### 結果（一致率）
-
-| method | total agreed / total gold | rate |
-|--------|-------|------|
-| baseline | **13/17** | **76.5%** |
-| scaffold_only | 11/17 | 64.7% |
-| rubric_only | 10/17 | 58.8% |
-| proposed | 12/17 | 70.6% |
-
-### ケース別
-
-| case | baseline | scaffold | rubric | proposed |
-|------|----------|----------|--------|----------|
-| Kelly | 2/3 | 2/3 | 1/3 | 2/3 |
-| Orben | 2/3 | 1/3 | 2/3 | 2/3 |
-| Twenge | 3/3 | 2/3 | 2/3 | 2/3 |
-| Cheng | 2/3 | 3/3 | 2/3 | 2/3 |
-| Voight | 2/2 | 2/2 | 2/2 | 2/2 |
-| Chen | 2/3 | 1/3 | 1/3 | 2/3 |
-
-**重要な発見**: ブラインド評価ではbaselineが最も高い一致率を出した。これは私（Claude）の手動採点（proposed優位）と異なる結果。
-
----
-
-## 6. Rubric独立指標（metrics.py）
-
-LLMもgold standardも使わない、機械的に集計可能な指標。
-
-### Overclaim抑制率（strength != "strong"）
-
-| method | suppressed / total | rate |
-|--------|-----|------|
-| baseline | 5/6 | 83.3% |
-| scaffold_only | 6/6 | **100%** |
-| rubric_only | 6/6 | **100%** |
-| proposed | 6/6 | **100%** |
-
-baselineのみKellyで `strength=strong` を出力。それ以外の3条件は全6ケースで過剰断定を抑制。
-
-### Evidence Grounding率（survive/reject判定にevidence_idsあり）
-
-| method | grounded / total | rate |
-|--------|-----|------|
-| baseline | 16/16 | 100% |
-| scaffold_only | 15/15 | 100% |
-| rubric_only | 19/19 | 100% |
-| proposed | 17/17 | 100% |
-
-全条件で100%。エビデンス参照は全条件で適切に行われている。
-
----
-
-## 7. 再現性検証（partial）
-
-`proposed × 6ケース × 3回` を実行（API quotaにより run3 全失敗、run2 部分失敗）。
-
-### 利用可能なデータ
-
-| case | run1 | run2 | run3 |
-|------|------|------|------|
-| Kelly | ✅ | ✅ | — |
-| Orben | ✅ | ✅ | — |
-| Twenge | ✅ | ✅ | — |
-| Cheng | ✅ | ✅ | — |
-| Voight | ✅ | — | — |
-| Chen | ✅ | — | — |
-
-### 再現性の発見
-
-| 項目 | 安定性 |
-|------|------|
-| strength = weak | **全実行・全ケースで安定** ✅ |
-| S1仮説数 | 概ね安定（4個。Orbenのみrun2で3個） |
-| 個別仮説のdecision | **実行間で変動** ❌ |
-
-**具体例**:
-- Twenge: run1(H1=hold) vs run2(H1=survive)
-- Cheng: run1(H2=hold, H3=survive) vs run2(H2=reject, H3=hold)
-- Orben: 仮説数まで変動（4 vs 3）
-
-**結論**: temperature=0.0でも個別仮説の判定は再現性が低い。論文では複数試行の平均または信頼区間を報告すべき。
-
----
-
-## 8. 主要な発見と論文への含意
-
-### 発見1: rubricは検査機構と組み合わせて機能する
-- `rubric_only` は6ケース中4ケースで最低スコア
-- rubricの拡張スキーマだけでは Designer の構造的誤りを修正できない
-- Supervisor + Mechanical Checks との組み合わせ（proposed）で初めて機能
-
-### 発見2: scaffoldは過剰断定を抑制する
-- baseline 5/6 vs scaffold_only 6/6 (overclaim suppression)
-- Supervisorの存在だけで `strength=strong` の出現が消える
-
-### 発見3: ブラインド評価では baseline が優位
-- 手動採点と異なる結果
-- 自動化された厳格な評価では proposed の優位性は弱まる
-- ただし、baselineは過剰断定（strong）を出すケースがある
-
-### 発見4: 仮説構造化の質が結果を決定する
-- Kelly（双方向因果）と Orben（効果量グラデーション）では proposed が明確に優位
-- これは rubric_designer_s1.txt の以下のガイダンスが効いている:
-  - 「双方向因果は別仮説として独立に評価せよ」
-  - 「効果の方向と程度を分離（nested構造）せよ」
-
-### 発見5: 再現性の限界
-- temperature=0.0 でも個別仮説のdecisionは不安定
-- strengthレベルでは安定
-- 論文では複数試行の集約を報告すべき
-
-### 発見6: 評価方法そのものの透明性
-- 手動採点 → 主観的、再現性なし
-- gold standardの仮説ラベル一致 → 過度に厳格、内容を見ない
-- ブラインドLLM突合 → 論文に書ける手順、独立評価
-
----
-
-## 9. ファイル構成
-
-### 実装
-- `run.py` - 4条件分岐を含むメインランナー
-- `schemas.py` - extended パラメータでの拡張スキーマ検証
-- `prompt_store.py` - 4プロファイル
-- `prompts/` - 9つのプロンプトファイル（rubric_designer×3, scaffold_supervisor×3, rubric_supervisor×3）
-- `cases.json` - 6ケース定義
-- `gold_standards.json` - 6ケースのgold standard
-- `blind_eval.py` - ブラインド突合スクリプト
-- `metrics.py` - rubric独立指標
-- `reproducibility_analysis.py` - 再現性分析
-
-### 結果データ
-- `outputs/run_4cond_{method}_{case}.jsonl` - 24件の4条件実行ログ
-- `outputs/repro_run{1,2,3}_proposed_{case}.jsonl` - 18件の再現性実行ログ
-- `eval_outputs/blind_eval_{case}_{method}.json` - 24件のブラインド評価結果
-- `eval_outputs/blind_eval_summary.json` - 集計サマリ
-- `eval_outputs/blind_eval_prompts.json` - 全突合プロンプト（再現性のため）
-- `eval_outputs/metrics_summary.json` - 機械的指標
-
-### ドキュメント
-- `results/comprehensive_report.md` - 本ファイル
-- `results/full_phase_outputs.txt` - 全フェーズ出力の生データ
-- `results/4condition_analysis.md` - 4条件分析（旧版）
-- `results/hypothesis_relations_extension.md` - hypothesis_relations拡張の背景
-
----
-
-## 10. 残課題と今後の方向性
-
-1. **再現性実験の完遂**: API quota回復後にrun3を補完
-2. **Cheng・Voightのgold standard明確化**: 仮説のラベル依存性を排除する書き方
-3. **Chenのcases.json記述精度向上**: 「効果の消失」と「効果量の不安定性」の区別を明示
-4. **複数モデルでのブラインド評価**: gpt-4o以外（Claude等）でも実施し評価のロバストネスを確認
-5. **ケースの拡充**: 6ケースは観察的因果推論の主要手法をカバーするが、より多様な分野でのテストが望ましい
+- ブラインド突合のモデルは gpt-4o を使う（実験のgpt-5.4-miniと異なるモデル）
+- temperature=0.0
+- ブラインド突合プロンプトに研究の目的を入れない（これは変更なし）
+- 旧結果（eval_outputs/）は保存したまま、新結果を eval_outputs_v2/ に出力する
+- gold_standards.json の旧版もバックアップとして保存する（gold_standards_v1.json にリネーム）
