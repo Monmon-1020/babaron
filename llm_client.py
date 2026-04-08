@@ -56,9 +56,9 @@ class LLMClient:
 
         # gpt-5.x uses max_completion_tokens; older models use max_tokens
         token_param = (
-            {"max_completion_tokens": 4096}
+            {"max_completion_tokens": 8000}
             if self.model.startswith("gpt-5") or self.model.startswith("o")
-            else {"max_tokens": 2000}
+            else {"max_tokens": 4000}
         )
         response = self._client.chat.completions.create(
             model=self.model,

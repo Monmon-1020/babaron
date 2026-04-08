@@ -1,0 +1,67 @@
+{
+  "case_id": "chen_huairiver",
+  "method": "scaffold_only",
+  "run_file": "outputs/run_4cond_scaffold_only_chen_huairiver_v3.jsonl",
+  "prompt": "あなたは二つの因果推論分析結果を比較する評価者です。\n研究の背景や目的は知る必要はありません。\n純粋に、二つの分析が同じ因果的主張について同じ判定をしているかを比較してください。\n\n【分析A】（参照分析）\n以下の仮説と「許容される判定（acceptable_decisions）」が与えられています。\n分析Bの判定がこの許容リストに含まれていれば一致とみなします。\n\n  G1: 粒子状大気汚染への長期曝露は平均寿命を短縮する\n     許容される判定: ['survive']\n  G2: 推定された5.5年という効果の大きさは3次多項式の選択に駆動されたものであり、効果量の信頼性が低い\n     許容される判定: ['survive']\n  G3: 淮河南北の平均寿命差は暖房政策以外の地域差（経済水準、医療アクセス等）で説明できる\n     許容される判定: ['hold']\n\n結論の強さの許容範囲: ['weak']\n\n【分析B】（評価対象）\n以下の仮説と判定が与えられています。\n\n  H1: 淮河以北の無料石炭暖房政策は冬季のTSP曝露を増加させ、その長期的な累積曝露が平均寿命を短縮する。したがって、淮河を境に北側で平均寿命が低下する不連続が観察される。\n     判定: survive\n  H2: 淮河以北の平均寿命低下は、TSPによる直接的な健康被害だけでなく、寒冷地での石炭暖房に伴う室内外の複合曝露や冬季感染症の増加など、暖房政策に付随する複数のメカニズムの合成効果である。\n     判定: hold\n  H3: 淮河暖房政策の推定効果は、実際の因果効果よりもRDDの仕様選択に敏感であり、3次多項式や広いバンド幅が境界付近の形状を過剰適合して見かけの寿命差を生み出している。\n     判定: reject\n  H4: 淮河以北の寿命低下は、暖房政策による汚染増加の因果効果と同時に、南北で異なる社会経済・医療アクセス・気候条件の構造差が残存して生じている。\n     判定: hold\n\n結論の強さ: weak\n\n【タスク】\n分析Aの各仮説について、分析Bの中に同じ因果的主張を述べている仮説があるかを判定してください。\n\n「同じ因果的主張」とは、処置（原因）と結果の方向が一致しており、本質的に同じことを主張していることを意味します。表現の違いや詳細度の違いは無視してください。\n\n判定の一致は、分析Bの判定が分析Aの「許容される判定」リストのいずれかに含まれていればtrue、そうでなければfalseとします。対応する仮説が見つからない場合（matched_b_id が null）は decision_match を false にしてください。\n\n以下のJSON形式で回答してください。\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"...\",\n      \"matched_b_id\": \"H1 or null\",\n      \"matched_b_statement\": \"...\",\n      \"match_confidence\": \"high/medium/low\",\n      \"match_reasoning\": \"なぜ同じ主張と判断したか（1文）\",\n      \"a_acceptable\": [\"survive\", \"hold\"],\n      \"b_decision\": \"survive or null\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"分析Bにあるが分析Aに対応がない仮説のID\"]\n}\n\nJSONのみを返してください。\n",
+  "raw_response": "```json\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"粒子状大気汚染への長期曝露は平均寿命を短縮する\",\n      \"matched_b_id\": \"H1\",\n      \"matched_b_statement\": \"淮河以北の無料石炭暖房政策は冬季のTSP曝露を増加させ、その長期的な累積曝露が平均寿命を短縮する。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方とも粒子状大気汚染が平均寿命を短縮することを主張している。\",\n      \"a_acceptable\": [\"survive\"],\n      \"b_decision\": \"survive\",\n      \"decision_match\": true\n    },\n    {\n      \"analysis_a_id\": \"G2\",\n      \"analysis_a_statement\": \"推定された5.5年という効果の大きさは3次多項式の選択に駆動されたものであり、効果量の信頼性が低い\",\n      \"matched_b_id\": \"H3\",\n      \"matched_b_statement\": \"淮河暖房政策の推定効果は、実際の因果効果よりもRDDの仕様選択に敏感であり、3次多項式や広いバンド幅が境界付近の形状を過剰適合して見かけの寿命差を生み出している。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方とも3次多項式の選択が効果の信頼性に影響を与えていると主張している。\",\n      \"a_acceptable\": [\"survive\"],\n      \"b_decision\": \"reject\",\n      \"decision_match\": false\n    },\n    {\n      \"analysis_a_id\": \"G3\",\n      \"analysis_a_statement\": \"淮河南北の平均寿命差は暖房政策以外の地域差（経済水準、医療アクセス等）で説明できる\",\n      \"matched_b_id\": \"H4\",\n      \"matched_b_statement\": \"淮河以北の寿命低下は、暖房政策による汚染増加の因果効果と同時に、南北で異なる社会経済・医療アクセス・気候条件の構造差が残存して生じている。\",\n      \"match_confidence\": \"medium\",\n      \"match_reasoning\": \"両方とも地域差が平均寿命差に影響を与えていると主張している。\",\n      \"a_acceptable\": [\"hold\"],\n      \"b_decision\": \"hold\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"H2\"]\n}\n```",
+  "parsed": {
+    "matches": [
+      {
+        "analysis_a_id": "G1",
+        "analysis_a_statement": "粒子状大気汚染への長期曝露は平均寿命を短縮する",
+        "matched_b_id": "H1",
+        "matched_b_statement": "淮河以北の無料石炭暖房政策は冬季のTSP曝露を増加させ、その長期的な累積曝露が平均寿命を短縮する。",
+        "match_confidence": "high",
+        "match_reasoning": "両方とも粒子状大気汚染が平均寿命を短縮することを主張している。",
+        "a_acceptable": [
+          "survive"
+        ],
+        "b_decision": "survive",
+        "decision_match": true
+      },
+      {
+        "analysis_a_id": "G2",
+        "analysis_a_statement": "推定された5.5年という効果の大きさは3次多項式の選択に駆動されたものであり、効果量の信頼性が低い",
+        "matched_b_id": "H3",
+        "matched_b_statement": "淮河暖房政策の推定効果は、実際の因果効果よりもRDDの仕様選択に敏感であり、3次多項式や広いバンド幅が境界付近の形状を過剰適合して見かけの寿命差を生み出している。",
+        "match_confidence": "high",
+        "match_reasoning": "両方とも3次多項式の選択が効果の信頼性に影響を与えていると主張している。",
+        "a_acceptable": [
+          "survive"
+        ],
+        "b_decision": "reject",
+        "decision_match": false
+      },
+      {
+        "analysis_a_id": "G3",
+        "analysis_a_statement": "淮河南北の平均寿命差は暖房政策以外の地域差（経済水準、医療アクセス等）で説明できる",
+        "matched_b_id": "H4",
+        "matched_b_statement": "淮河以北の寿命低下は、暖房政策による汚染増加の因果効果と同時に、南北で異なる社会経済・医療アクセス・気候条件の構造差が残存して生じている。",
+        "match_confidence": "medium",
+        "match_reasoning": "両方とも地域差が平均寿命差に影響を与えていると主張している。",
+        "a_acceptable": [
+          "hold"
+        ],
+        "b_decision": "hold",
+        "decision_match": true
+      }
+    ],
+    "strength_a_acceptable": [
+      "weak"
+    ],
+    "strength_b": "weak",
+    "strength_match": true,
+    "unmatched_b_hypotheses": [
+      "H2"
+    ]
+  },
+  "summary": {
+    "gold_count": 3,
+    "matched": 3,
+    "agreed": 2,
+    "disagreed": 1,
+    "absent": 0,
+    "strength_match": true,
+    "agreement_rate": "2/3"
+  }
+}

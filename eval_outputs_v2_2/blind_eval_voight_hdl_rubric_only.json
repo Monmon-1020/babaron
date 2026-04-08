@@ -1,0 +1,56 @@
+{
+  "case_id": "voight_hdl",
+  "method": "rubric_only",
+  "run_file": "outputs/run_4cond_rubric_only_voight_hdl_v3.jsonl",
+  "prompt": "あなたは二つの因果推論分析結果を比較する評価者です。\n研究の背景や目的は知る必要はありません。\n純粋に、二つの分析が同じ因果的主張について同じ判定をしているかを比較してください。\n\n【分析A】（参照分析）\n以下の仮説と「許容される判定（acceptable_decisions）」が与えられています。\n分析Bの判定がこの許容リストに含まれていれば一致とみなします。\n\n  G1: HDL-C上昇は心筋梗塞リスクを因果的に低下させる（HDL仮説）\n     許容される判定: ['reject']\n  G2: HDL-Cと心筋梗塞の観察的逆相関は、LDL-Cやトリグリセリドとの交差多面発現による見かけの関連である\n     許容される判定: ['survive']\n\n結論の強さの許容範囲: ['strong']\n\n【分析B】（評価対象）\n以下の仮説と判定が与えられています。\n\n  H1: 遺伝的に決定されるHDL-Cの上昇は、MIリスクを因果的に低下させる（主要因果方向: HDL-C → MI）。\n     判定: reject\n  H2: MIリスクの高低が、HDL-C水準に影響を与える逆方向因果が存在する（MI → HDL-C）。\n     判定: hold\n  H3: 観察されたHDL-CとMIの逆相関は、HDL-Cの因果効果ではなく、水平的多面発現や共通原因によるスプリアス相関である（第三要因/排除制約違反）。\n     判定: survive\n  H4: HDL-CとMIの関連は、HDL-Cそのものではなく、別の主要因（例: LDL-C低下、生活習慣、炎症、代謝状態）によって説明される（代替原因）。\n     判定: survive\n  H5: HDL-C上昇とMI低下の関連が存在するとしても、その効果量は実質的に小さく、臨床的に意味のある大きさではない（効果量グラデーション: 方向はあるが程度は限定的）。\n     判定: hold\n\n結論の強さ: hold\n\n【タスク】\n分析Aの各仮説について、分析Bの中に同じ因果的主張を述べている仮説があるかを判定してください。\n\n「同じ因果的主張」とは、処置（原因）と結果の方向が一致しており、本質的に同じことを主張していることを意味します。表現の違いや詳細度の違いは無視してください。\n\n判定の一致は、分析Bの判定が分析Aの「許容される判定」リストのいずれかに含まれていればtrue、そうでなければfalseとします。対応する仮説が見つからない場合（matched_b_id が null）は decision_match を false にしてください。\n\n以下のJSON形式で回答してください。\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"...\",\n      \"matched_b_id\": \"H1 or null\",\n      \"matched_b_statement\": \"...\",\n      \"match_confidence\": \"high/medium/low\",\n      \"match_reasoning\": \"なぜ同じ主張と判断したか（1文）\",\n      \"a_acceptable\": [\"survive\", \"hold\"],\n      \"b_decision\": \"survive or null\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"分析Bにあるが分析Aに対応がない仮説のID\"]\n}\n\nJSONのみを返してください。\n",
+  "raw_response": "```json\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"HDL-C上昇は心筋梗塞リスクを因果的に低下させる（HDL仮説）\",\n      \"matched_b_id\": \"H1\",\n      \"matched_b_statement\": \"遺伝的に決定されるHDL-Cの上昇は、MIリスクを因果的に低下させる（主要因果方向: HDL-C → MI）。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方の仮説がHDL-Cの上昇が心筋梗塞リスクを低下させる因果的主張をしている。\",\n      \"a_acceptable\": [\"reject\"],\n      \"b_decision\": \"reject\",\n      \"decision_match\": true\n    },\n    {\n      \"analysis_a_id\": \"G2\",\n      \"analysis_a_statement\": \"HDL-Cと心筋梗塞の観察的逆相関は、LDL-Cやトリグリセリドとの交差多面発現による見かけの関連である\",\n      \"matched_b_id\": \"H3\",\n      \"matched_b_statement\": \"観察されたHDL-CとMIの逆相関は、HDL-Cの因果効果ではなく、水平的多面発現や共通原因によるスプリアス相関である（第三要因/排除制約違反）。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方の仮説がHDL-Cと心筋梗塞の逆相関が因果的ではなく、他の要因によるものであると主張している。\",\n      \"a_acceptable\": [\"survive\"],\n      \"b_decision\": \"survive\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a_acceptable\": [\"strong\"],\n  \"strength_b\": \"hold\",\n  \"strength_match\": false,\n  \"unmatched_b_hypotheses\": [\"H2\", \"H4\", \"H5\"]\n}\n```",
+  "parsed": {
+    "matches": [
+      {
+        "analysis_a_id": "G1",
+        "analysis_a_statement": "HDL-C上昇は心筋梗塞リスクを因果的に低下させる（HDL仮説）",
+        "matched_b_id": "H1",
+        "matched_b_statement": "遺伝的に決定されるHDL-Cの上昇は、MIリスクを因果的に低下させる（主要因果方向: HDL-C → MI）。",
+        "match_confidence": "high",
+        "match_reasoning": "両方の仮説がHDL-Cの上昇が心筋梗塞リスクを低下させる因果的主張をしている。",
+        "a_acceptable": [
+          "reject"
+        ],
+        "b_decision": "reject",
+        "decision_match": true
+      },
+      {
+        "analysis_a_id": "G2",
+        "analysis_a_statement": "HDL-Cと心筋梗塞の観察的逆相関は、LDL-Cやトリグリセリドとの交差多面発現による見かけの関連である",
+        "matched_b_id": "H3",
+        "matched_b_statement": "観察されたHDL-CとMIの逆相関は、HDL-Cの因果効果ではなく、水平的多面発現や共通原因によるスプリアス相関である（第三要因/排除制約違反）。",
+        "match_confidence": "high",
+        "match_reasoning": "両方の仮説がHDL-Cと心筋梗塞の逆相関が因果的ではなく、他の要因によるものであると主張している。",
+        "a_acceptable": [
+          "survive"
+        ],
+        "b_decision": "survive",
+        "decision_match": true
+      }
+    ],
+    "strength_a_acceptable": [
+      "strong"
+    ],
+    "strength_b": "hold",
+    "strength_match": false,
+    "unmatched_b_hypotheses": [
+      "H2",
+      "H4",
+      "H5"
+    ]
+  },
+  "summary": {
+    "gold_count": 2,
+    "matched": 2,
+    "agreed": 2,
+    "disagreed": 0,
+    "absent": 0,
+    "strength_match": false,
+    "agreement_rate": "2/2"
+  }
+}
