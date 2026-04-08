@@ -1,0 +1,63 @@
+{
+  "case_id": "web_browsing_mood",
+  "method": "rubric_only",
+  "run_file": "outputs/run_4cond_rubric_only_web_browsing_mood_v3.jsonl",
+  "checkpoints": [
+    {
+      "id": "K1",
+      "stage": "S1",
+      "what_to_check": "hypotheses",
+      "question": "出力の仮説リストの中に、「コンテンツ→気分」の因果方向と「気分→コンテンツ」の因果方向が、独立に評価可能な別々の仮説として立てられているか。「双方向因果」を1つの仮説にまとめているのではなく、各方向が別の仮説になっているか。",
+      "extracted_output": "[\n  {\n    \"id\": \"H1\",\n    \"statement\": \"自発的ウェブ閲覧で接触する情報のvalenceがネガティブになるほど、その直後の気分スコアは低下する（短期の負の関連がある）。\",\n    \"falsify\": \"閲覧valenceがよりネガティブになっても気分スコアが低下せず、ゼロまたは正の関連が一貫して観察される場合、この仮説は棄却される。\",\n    \"distinctive_prediction\": \"同一参加者内で、よりネガティブなページを多く閲覧したセッションほど、その後の気分が低い。自然観察でも実験でも、valence操作に応じて気分が同方向に変化するはずである。\"\n  },\n  {\n    \"id\": \"H2\",\n    \"statement\": \"ネガティブなウェブ閲覧は気分に実質的に意味のある大きさの悪化をもたらす（効果量が事前に定めた閾値を超える）。\",\n    \"falsify\": \"H1の方向性は支持されても、効果量が小さく、事前に定めた実質的閾値（例: 標準化効果量やη²の最小重要差）を下回る場合、この仮説は棄却される。\",\n ",
+      "answer": "yes",
+      "evidence": "H1 addresses the causal direction from 'content to mood' by stating that negative valence in web browsing leads to a decrease in mood scores. H3 addresses the causal direction from 'mood to content' by stating that a worse mood leads to the selection of more negative valence information. These are separate hypotheses evaluating each causal direction independently.",
+      "confidence": "high",
+      "method_used": "llm",
+      "prompt": "あなたは因果推論の分析出力を評価する評価者です。\n研究の背景や目的は知る必要はありません。\n\n以下は、ある因果推論分析のS1段階の出力から抽出した内容です。\n\n---\n[\n  {\n    \"id\": \"H1\",\n    \"statement\": \"自発的ウェブ閲覧で接触する情報のvalenceがネガティブになるほど、その直後の気分スコアは低下する（短期の負の関連がある）。\",\n    \"falsify\": \"閲覧valenceがよりネガティブになっても気分スコアが低下せず、ゼロまたは正の関連が一貫して観察される場合、この仮説は棄却される。\",\n    \"distinctive_prediction\": \"同一参加者内で、よりネガティブなページを多く閲覧したセッションほど、その後の気分が低い。自然観察でも実験でも、valence操作に応じて気分が同方向に変化するはずである。\"\n  },\n  {\n    \"id\": \"H2\",\n    \"statement\": \"ネガティブなウェブ閲覧は気分に実質的に意味のある大きさの悪化をもたらす（効果量が事前に定めた閾値を超える）。\",\n    \"falsify\": \"H1の方向性は支持されても、効果量が小さく、事前に定めた実質的閾値（例: 標準化効果量やη²の最小重要差）を下回る場合、この仮説は棄却される。\",\n    \"distinctive_prediction\": \"ネガティブvalence条件と中立条件の差は統計的に検出されるだけでなく、参加者の主観的気分に明確に知覚される程度の大きさになる。小さな差ではH1は残ってもH2は成立しない。\"\n  },\n  {\n    \"id\": \"H3\",\n    \"statement\": \"気分が悪い状態ほど、その後の自発的ウェブ閲覧でよりネガティブなvalenceの情報を選択する（気分から閲覧選択への逆方向の負の関連がある）。\",\n    \"falsify\": \"先行する気分の低下が、その後の閲覧valenceのネガティブ化を予測しない、あるいは逆によりポジティブな選択を予測する場合、この仮説は棄却される。\",\n    \"distinctive_prediction\": \"気分を測定した後の選択局面で、より不機嫌な参加者ほどネガティブページを多く選ぶ。閲覧valenceを操作しただけでは説明できない、時間順序を持つ逆方向の予測を出す。\"\n  },\n  {\n    \"id\": \"H4\",\n    \"statement\": \"閲覧パターンへの感情ラベル介入は、ネガティブページの選択を減らし、結果として気分を改善する（介入による選択変化と気分改善が生じる）。\",\n    \"falsify\": \"感情ラベル介入がネガティブページ選択を減らさず、または気分改善をもたらさない場合、この仮説は棄却される。\",\n    \"distinctive_prediction\": \"ラベルあり条件では、ラベルなし条件よりもネガティブページの選択数が少なく、セッション後の気分が高い。H1/H3の自然な関連とは異なり、選択行動を変える介入効果が観察される。\"\n  }\n]\n---\n\n質問：この出力の中に、以下の問題への言及がありますか？\n\n「出力の仮説リストの中に、「コンテンツ→気分」の因果方向と「気分→コンテンツ」の因果方向が、独立に評価可能な別々の仮説として立てられているか。「双方向因果」を1つの仮説にまとめているのではなく、各方向が別の仮説になっているか。」\n\n以下のJSON形式で回答してください。\n{\n  \"answer\": \"yes\" または \"no\",\n  \"evidence\": \"yesの場合、出力のどの部分が該当するか（引用または要約）。noの場合、なぜ言及がないと判断したか。\",\n  \"confidence\": \"high\" または \"medium\" または \"low\"\n}\n\n注意：\n- 完全に同じ表現でなくても、同じ問題について述べていれば \"yes\" と判定してください。\n- 一般的・漠然とした言及ではなく、質問で指定された具体的な問題に対応する内容があるかを判定してください。\n- 出力に該当フィールドが存在しない場合は \"no\" と判定してください。\n\nJSONのみを返してください。\n",
+      "raw_response": "```json\n{\n  \"answer\": \"yes\",\n  \"evidence\": \"H1 addresses the causal direction from 'content to mood' by stating that negative valence in web browsing leads to a decrease in mood scores. H3 addresses the causal direction from 'mood to content' by stating that a worse mood leads to the selection of more negative valence information. These are separate hypotheses evaluating each causal direction independently.\",\n  \"confidence\": \"high\"\n}\n```"
+    },
+    {
+      "id": "K2",
+      "stage": "S2",
+      "what_to_check": "identification_assumptions",
+      "question": "出力の識別仮定リストの中に、Study 3の媒介分析における以下の問題への言及があるか：「処置（ネガティブページの閲覧）が、媒介変数（気分の変化）を経由せずに、直接的に結果（後続の閲覧行動）に影響する可能性がある」。つまり、処置→結果の直接効果（媒介変数をバイパスする経路）が排除されていないことへの言及。",
+      "extracted_output": "[\n  {\n    \"id\": \"IA1\",\n    \"assumption\": \"Study 3-4ではランダム割付が成立し、処置群と対照群の潜在的交絡が平均的に均衡している。\",\n    \"if_violated\": \"群間差が交絡で歪み、ネガティブ条件やラベル介入の因果効果を過大または過小推定する。\"\n  },\n  {\n    \"id\": \"IA2\",\n    \"assumption\": \"valence測定（NRC lexiconによる分類/スコア）が参加者の実際の感情的経験を十分に近似している。\",\n    \"if_violated\": \"測定誤差により真のvalence効果が減衰し、H1/H2/H3の効果がゼロに近づいて見える。\"\n  },\n  {\n    \"id\": \"IA3\",\n    \"assumption\": \"気分測定が閲覧や選択の直後に行われ、時間順序が正しく保持されている。\",\n    \"if_violated\": \"逆因果や同時測定の混入により、H1とH3の方向性推定が曖昧になり、因果解釈が弱まる。\"\n  },\n  {\n    \"id\": \"IA4\",\n  ",
+      "answer": "no",
+      "evidence": "出力の識別仮定リストには、処置が媒介変数を経由せずに直接結果に影響する可能性についての具体的な言及は見当たりません。各仮定は、ランダム割付、測定の正確性、時間順序、参加者の行動変化、外乱の影響、欠測の独立性、アウトカムの事前固定に関するものであり、媒介変数をバイパスする経路の排除については触れていません。",
+      "confidence": "high",
+      "method_used": "llm",
+      "prompt": "あなたは因果推論の分析出力を評価する評価者です。\n研究の背景や目的は知る必要はありません。\n\n以下は、ある因果推論分析のS2段階の出力から抽出した内容です。\n\n---\n[\n  {\n    \"id\": \"IA1\",\n    \"assumption\": \"Study 3-4ではランダム割付が成立し、処置群と対照群の潜在的交絡が平均的に均衡している。\",\n    \"if_violated\": \"群間差が交絡で歪み、ネガティブ条件やラベル介入の因果効果を過大または過小推定する。\"\n  },\n  {\n    \"id\": \"IA2\",\n    \"assumption\": \"valence測定（NRC lexiconによる分類/スコア）が参加者の実際の感情的経験を十分に近似している。\",\n    \"if_violated\": \"測定誤差により真のvalence効果が減衰し、H1/H2/H3の効果がゼロに近づいて見える。\"\n  },\n  {\n    \"id\": \"IA3\",\n    \"assumption\": \"気分測定が閲覧や選択の直後に行われ、時間順序が正しく保持されている。\",\n    \"if_violated\": \"逆因果や同時測定の混入により、H1とH3の方向性推定が曖昧になり、因果解釈が弱まる。\"\n  },\n  {\n    \"id\": \"IA4\",\n    \"assumption\": \"参加者は閲覧履歴提出やラベル介入の存在によって行動を大きく変えない、またはその影響が群間で同程度である。\",\n    \"if_violated\": \"需要特性や反応バイアスにより、閲覧選択や気分報告が系統的に歪み、効果が過小または過大に見える。\"\n  },\n  {\n    \"id\": \"IA5\",\n    \"assumption\": \"短期セッション内の気分変化は、同一セッション内の閲覧valenceや介入に主として起因し、未観測の急性ストレッサーや外乱が支配的でない。\",\n    \"if_violated\": \"外乱が結果を支配し、閲覧valenceや介入の真の効果がノイズに埋もれるか、偽の関連が生じる。\"\n  },\n  {\n    \"id\": \"IA6\",\n    \"assumption\": \"欠測・脱落は処置や気分と独立、または観測共変量で十分に調整可能である。\",\n    \"if_violated\": \"選択バイアスが生じ、特に気分が悪い参加者の脱落が多い場合、悪化効果が過小推定される。\"\n  },\n  {\n    \"id\": \"IA7\",\n    \"assumption\": \"H1/H2/H3/H4で用いる主要アウトカムと閾値は事前に固定され、解析者の自由度が制限されている。\",\n    \"if_violated\": \"閾値やモデル選択の後出しにより、accept/reject/holdの判定が恣意的になり、再現性が低下する。\"\n  }\n]\n---\n\n質問：この出力の中に、以下の問題への言及がありますか？\n\n「出力の識別仮定リストの中に、Study 3の媒介分析における以下の問題への言及があるか：「処置（ネガティブページの閲覧）が、媒介変数（気分の変化）を経由せずに、直接的に結果（後続の閲覧行動）に影響する可能性がある」。つまり、処置→結果の直接効果（媒介変数をバイパスする経路）が排除されていないことへの言及。」\n\n以下のJSON形式で回答してください。\n{\n  \"answer\": \"yes\" または \"no\",\n  \"evidence\": \"yesの場合、出力のどの部分が該当するか（引用または要約）。noの場合、なぜ言及がないと判断したか。\",\n  \"confidence\": \"high\" または \"medium\" または \"low\"\n}\n\n注意：\n- 完全に同じ表現でなくても、同じ問題について述べていれば \"yes\" と判定してください。\n- 一般的・漠然とした言及ではなく、質問で指定された具体的な問題に対応する内容があるかを判定してください。\n- 出力に該当フィールドが存在しない場合は \"no\" と判定してください。\n\nJSONのみを返してください。\n",
+      "raw_response": "```json\n{\n  \"answer\": \"no\",\n  \"evidence\": \"出力の識別仮定リストには、処置が媒介変数を経由せずに直接結果に影響する可能性についての具体的な言及は見当たりません。各仮定は、ランダム割付、測定の正確性、時間順序、参加者の行動変化、外乱の影響、欠測の独立性、アウトカムの事前固定に関するものであり、媒介変数をバイパスする経路の排除については触れていません。\",\n  \"confidence\": \"high\"\n}\n```"
+    },
+    {
+      "id": "K3",
+      "stage": "S3",
+      "what_to_check": "identification_assumption_concerns",
+      "question": "出力の識別仮定の懸念評価において、上記の媒介分析の仮定（処置→結果の直接効果の排除）が「uncertain」または「violated」と評価されているか。または、この懸念がresidual_alternativesに記述されているか。",
+      "extracted_output": "{\n  \"identification_assumption_concerns\": [\n    {\n      \"id\": \"IA1\",\n      \"violated_or_uncertain\": \"uncertain\",\n      \"impact_on_conclusion\": \"Study 3-4のランダム割付は支持されるが、群間の未観測交絡が完全に排除されたとは断言できない。もし不均衡があれば、H2/H4の因果効果は過大または過小推定されうる。\"\n    },\n    {\n      \"id\": \"IA2\",\n      \"violated_or_uncertain\": \"uncertain\",\n      \"impact_on_conclusion\": \"NRC lexiconは高い一致を示すが文脈非依存であり、valence測定誤差が真の効果を減衰させる可能性がある。したがってH1/H3の推定は保守的に解釈すべき。\"\n    },\n    {\n      \"id\": \"IA3\",\n      \"violated_or_uncertain\": \"satisfied\",\n  ",
+      "answer": "no",
+      "evidence": "出力には、媒介分析の仮定（処置→結果の直接効果の排除）に関する具体的な言及がありません。識別仮定の懸念評価やresidual_alternativesのどちらにも、この特定の仮定に関する記述は見当たりません。",
+      "confidence": "high",
+      "method_used": "llm",
+      "prompt": "あなたは因果推論の分析出力を評価する評価者です。\n研究の背景や目的は知る必要はありません。\n\n以下は、ある因果推論分析のS3段階の出力から抽出した内容です。\n\n---\n{\n  \"identification_assumption_concerns\": [\n    {\n      \"id\": \"IA1\",\n      \"violated_or_uncertain\": \"uncertain\",\n      \"impact_on_conclusion\": \"Study 3-4のランダム割付は支持されるが、群間の未観測交絡が完全に排除されたとは断言できない。もし不均衡があれば、H2/H4の因果効果は過大または過小推定されうる。\"\n    },\n    {\n      \"id\": \"IA2\",\n      \"violated_or_uncertain\": \"uncertain\",\n      \"impact_on_conclusion\": \"NRC lexiconは高い一致を示すが文脈非依存であり、valence測定誤差が真の効果を減衰させる可能性がある。したがってH1/H3の推定は保守的に解釈すべき。\"\n    },\n    {\n      \"id\": \"IA3\",\n      \"violated_or_uncertain\": \"satisfied\",\n      \"impact_on_conclusion\": \"S2では時系列順序が確保されており、H1/H3の方向性判定は概ね可能。\"\n    },\n    {\n      \"id\": \"IA4\",\n      \"violated_or_uncertain\": \"uncertain\",\n      \"impact_on_conclusion\": \"参加者が閲覧履歴提出やラベル介入を意識して行動を変えた可能性があり、効果の過小・過大推定の両方がありうる。\"\n    },\n    {\n      \"id\": \"IA5\",\n      \"violated_or_uncertain\": \"uncertain\",\n      \"impact_on_conclusion\": \"短期セッション内の気分変化に未観測の急性ストレッサーが混入している可能性があり、特に観察研究の解釈を弱める。\"\n    },\n    {\n      \"id\": \"IA6\",\n      \"violated_or_uncertain\": \"uncertain\",\n      \"impact_on_conclusion\": \"欠測・脱落の群依存性が完全には示されていないため、選択バイアスが残る可能性がある。\"\n    },\n    {\n      \"id\": \"IA7\",\n      \"violated_or_uncertain\": \"satisfied\",\n      \"impact_on_conclusion\": \"主要アウトカムと閾値は事前固定されており、後出し判定の懸念は相対的に小さい。\"\n    }\n  ],\n  \"residual_alternatives\": [\n    \"需要特性や報告バイアスによって、ネガティブ閲覧と気分の関連が一部増幅されている可能性\",\n    \"未観測の急性ストレッサーが気分と閲覧選択の両方に影響している可能性\",\n    \"ラベル介入の効果が、感情ラベルそのものではなく新規性や注意喚起による可能性\",\n    \"短期セッション内の効果であり、長期的なメンタルヘルス変化は別の過程で決まる可能性\"\n  ],\n  \"remaining_alternatives\": []\n}\n---\n\n質問：この出力の中に、以下の問題への言及がありますか？\n\n「出力の識別仮定の懸念評価において、上記の媒介分析の仮定（処置→結果の直接効果の排除）が「uncertain」または「violated」と評価されているか。または、この懸念がresidual_alternativesに記述されているか。」\n\n以下のJSON形式で回答してください。\n{\n  \"answer\": \"yes\" または \"no\",\n  \"evidence\": \"yesの場合、出力のどの部分が該当するか（引用または要約）。noの場合、なぜ言及がないと判断したか。\",\n  \"confidence\": \"high\" または \"medium\" または \"low\"\n}\n\n注意：\n- 完全に同じ表現でなくても、同じ問題について述べていれば \"yes\" と判定してください。\n- 一般的・漠然とした言及ではなく、質問で指定された具体的な問題に対応する内容があるかを判定してください。\n- 出力に該当フィールドが存在しない場合は \"no\" と判定してください。\n\nJSONのみを返してください。\n",
+      "raw_response": "```json\n{\n  \"answer\": \"no\",\n  \"evidence\": \"出力には、媒介分析の仮定（処置→結果の直接効果の排除）に関する具体的な言及がありません。識別仮定の懸念評価やresidual_alternativesのどちらにも、この特定の仮定に関する記述は見当たりません。\",\n  \"confidence\": \"high\"\n}\n```"
+    },
+    {
+      "id": "K4",
+      "stage": "S3",
+      "what_to_check": "strength",
+      "question": "結論の強さ（strength）がstrongではないか（weakまたはholdであるか）。",
+      "extracted_output": "weak",
+      "answer": "yes",
+      "evidence": "strength=weak",
+      "confidence": "high",
+      "method_used": "mechanical"
+    }
+  ],
+  "summary": {
+    "total": 4,
+    "yes": 2,
+    "no": 2,
+    "detection_rate": "2/4"
+  }
+}
