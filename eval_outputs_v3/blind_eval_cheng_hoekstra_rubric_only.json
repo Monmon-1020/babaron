@@ -2,17 +2,17 @@
   "case_id": "cheng_hoekstra",
   "method": "rubric_only",
   "run_file": "outputs/run_4cond_rubric_only_cheng_hoekstra_v3.jsonl",
-  "prompt": "あなたは二つの因果推論分析結果を比較する評価者です。\n研究の背景や目的は知る必要はありません。\n純粋に、二つの分析が同じ因果的主張について同じ判定をしているかを比較してください。\n\n【分析A】（参照分析）\n以下の仮説と「許容される判定（acceptable_decisions）」が与えられています。\n分析Bの判定がこの許容リストに含まれていれば一致とみなします。\n\n  G1: Castle Doctrine法の採用は殺人・過失致死を増加させる\n     許容される判定: ['survive']\n  G2: Castle Doctrine法は暴力犯罪（窃盗・強盗・加重暴行）を抑止する\n     許容される判定: ['reject']\n  G3: 推定された殺人増加はstaggered TWFE推定量の方法論的問題（負のウェイト、時間的異質性）による見かけの効果である\n     許容される判定: ['reject']\n\n結論の強さの許容範囲: ['strong']\n\n【分析B】（評価対象）\n以下の仮説と判定が与えられています。\n\n  H1: Castle Doctrine法の採用は、州内の暴力犯罪率を低下させる（抑止効果がある）。\n     判定: reject\n  H2: Castle Doctrine法の採用は、殺人率を増加させる（致死的暴力を誘発する）。\n     判定: survive\n  H3: Castle Doctrine法の採用は、暴力犯罪の総量にはほとんど影響しないが、非致死的暴力から致死的暴力への置換を引き起こす。\n     判定: hold\n\n結論の強さ: weak\n\n【タスク】\n分析Aの各仮説について、分析Bの中に同じ因果的主張を述べている仮説があるかを判定してください。\n\n「同じ因果的主張」とは、処置（原因）と結果の方向が一致しており、本質的に同じことを主張していることを意味します。表現の違いや詳細度の違いは無視してください。\n\n判定の一致は、分析Bの判定が分析Aの「許容される判定」リストのいずれかに含まれていればtrue、そうでなければfalseとします。対応する仮説が見つからない場合（matched_b_id が null）は decision_match を false にしてください。\n\n以下のJSON形式で回答してください。\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"...\",\n      \"matched_b_id\": \"H1 or null\",\n      \"matched_b_statement\": \"...\",\n      \"match_confidence\": \"high/medium/low\",\n      \"match_reasoning\": \"なぜ同じ主張と判断したか（1文）\",\n      \"a_acceptable\": [\"survive\", \"hold\"],\n      \"b_decision\": \"survive or null\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"分析Bにあるが分析Aに対応がない仮説のID\"]\n}\n\nJSONのみを返してください。\n",
-  "raw_response": "```json\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"Castle Doctrine法の採用は殺人・過失致死を増加させる\",\n      \"matched_b_id\": \"H2\",\n      \"matched_b_statement\": \"Castle Doctrine法の採用は、殺人率を増加させる（致死的暴力を誘発する）。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方ともCastle Doctrine法が致死的暴力を増加させると主張している。\",\n      \"a_acceptable\": [\"survive\"],\n      \"b_decision\": \"survive\",\n      \"decision_match\": true\n    },\n    {\n      \"analysis_a_id\": \"G2\",\n      \"analysis_a_statement\": \"Castle Doctrine法は暴力犯罪（窃盗・強盗・加重暴行）を抑止する\",\n      \"matched_b_id\": \"H1\",\n      \"matched_b_statement\": \"Castle Doctrine法の採用は、州内の暴力犯罪率を低下させる（抑止効果がある）。\",\n      \"match_confidence\": \"medium\",\n      \"match_reasoning\": \"両方ともCastle Doctrine法が暴力犯罪を抑止すると主張している。\",\n      \"a_acceptable\": [\"reject\"],\n      \"b_decision\": \"reject\",\n      \"decision_match\": true\n    },\n    {\n      \"analysis_a_id\": \"G3\",\n      \"analysis_a_statement\": \"推定された殺人増加はstaggered TWFE推定量の方法論的問題（負のウェイト、時間的異質性）による見かけの効果である\",\n      \"matched_b_id\": null,\n      \"matched_b_statement\": null,\n      \"match_confidence\": \"low\",\n      \"match_reasoning\": \"分析Bには方法論的問題に関する仮説がない。\",\n      \"a_acceptable\": [\"reject\"],\n      \"b_decision\": null,\n      \"decision_match\": false\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"H3\"]\n}\n```",
+  "prompt": "あなたは二つの因果推論分析結果を比較する評価者です。\n研究の背景や目的は知る必要はありません。\n純粋に、二つの分析が同じ因果的主張について同じ判定をしているかを比較してください。\n\n【分析A】（参照分析）\n以下の仮説と「許容される判定（acceptable_decisions）」が与えられています。\n分析Bの判定がこの許容リストに含まれていれば一致とみなします。\n\n  G1: Castle Doctrine法の採用は殺人・過失致死を増加させる\n     許容される判定: ['survive']\n  G2: Castle Doctrine法は暴力犯罪（窃盗・強盗・加重暴行）を抑止する\n     許容される判定: ['reject']\n  G3: 推定された殺人増加はstaggered TWFE推定量の方法論的問題（負のウェイト、時間的異質性）による見かけの効果である\n     許容される判定: ['reject']\n\n結論の強さの許容範囲: ['strong']\n\n【分析B】（評価対象）\n以下の仮説と判定が与えられています。\n\n  H1: Castle Doctrine法（Stand Your Ground法）の採用は、州内の暴力犯罪を抑止し、殺人・過失致死、強盗、加重暴行などの発生率を低下させる。\n     判定: reject\n  H2: Castle Doctrine法の採用は、正当防衛の拡大を通じて対人暴力のエスカレーションを招き、殺人・過失致死を増加させる。\n     判定: survive\n  H3: 観察された法採用と暴力犯罪の関連は、Castle Doctrine法そのものではなく、州ごとの既存の犯罪トレンド、警察活動、人口構成、景気変動などの交絡要因によって生じたスプリアス相関である。\n     判定: hold\n  H4: 暴力犯罪や殺人の変化はCastle Doctrine法ではなく、同時期の別の州政策、司法運用の変化、経済・人口動態の変化によって引き起こされている。\n     判定: hold\n  H5: Castle Doctrine法の採用は暴力犯罪に影響するが、その効果は実質的に小さく、統計的に検出されても政策的に意味のある大きさではない。\n     判定: reject\n\n結論の強さ: weak\n\n【タスク】\n分析Aの各仮説について、分析Bの中に同じ因果的主張を述べている仮説があるかを判定してください。\n\n「同じ因果的主張」とは、処置（原因）と結果の方向が一致しており、本質的に同じことを主張していることを意味します。表現の違いや詳細度の違いは無視してください。\n\n判定の一致は、分析Bの判定が分析Aの「許容される判定」リストのいずれかに含まれていればtrue、そうでなければfalseとします。対応する仮説が見つからない場合（matched_b_id が null）は decision_match を false にしてください。\n\n以下のJSON形式で回答してください。\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"...\",\n      \"matched_b_id\": \"H1 or null\",\n      \"matched_b_statement\": \"...\",\n      \"match_confidence\": \"high/medium/low\",\n      \"match_reasoning\": \"なぜ同じ主張と判断したか（1文）\",\n      \"a_acceptable\": [\"survive\", \"hold\"],\n      \"b_decision\": \"survive or null\",\n      \"decision_match\": true\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"分析Bにあるが分析Aに対応がない仮説のID\"]\n}\n\nJSONのみを返してください。\n",
+  "raw_response": "```json\n{\n  \"matches\": [\n    {\n      \"analysis_a_id\": \"G1\",\n      \"analysis_a_statement\": \"Castle Doctrine法の採用は殺人・過失致死を増加させる\",\n      \"matched_b_id\": \"H2\",\n      \"matched_b_statement\": \"Castle Doctrine法の採用は、正当防衛の拡大を通じて対人暴力のエスカレーションを招き、殺人・過失致死を増加させる。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方の仮説はCastle Doctrine法が殺人・過失致死を増加させると主張している。\",\n      \"a_acceptable\": [\"survive\"],\n      \"b_decision\": \"survive\",\n      \"decision_match\": true\n    },\n    {\n      \"analysis_a_id\": \"G2\",\n      \"analysis_a_statement\": \"Castle Doctrine法は暴力犯罪（窃盗・強盗・加重暴行）を抑止する\",\n      \"matched_b_id\": \"H1\",\n      \"matched_b_statement\": \"Castle Doctrine法（Stand Your Ground法）の採用は、州内の暴力犯罪を抑止し、殺人・過失致死、強盗、加重暴行などの発生率を低下させる。\",\n      \"match_confidence\": \"high\",\n      \"match_reasoning\": \"両方の仮説はCastle Doctrine法が暴力犯罪を抑止すると主張している。\",\n      \"a_acceptable\": [\"reject\"],\n      \"b_decision\": \"reject\",\n      \"decision_match\": true\n    },\n    {\n      \"analysis_a_id\": \"G3\",\n      \"analysis_a_statement\": \"推定された殺人増加はstaggered TWFE推定量の方法論的問題（負のウェイト、時間的異質性）による見かけの効果である\",\n      \"matched_b_id\": null,\n      \"matched_b_statement\": null,\n      \"match_confidence\": \"low\",\n      \"match_reasoning\": \"分析Bにはstaggered TWFE推定量の方法論的問題に関する仮説がない。\",\n      \"a_acceptable\": [\"reject\"],\n      \"b_decision\": null,\n      \"decision_match\": false\n    }\n  ],\n  \"strength_a_acceptable\": [\"weak\"],\n  \"strength_b\": \"weak\",\n  \"strength_match\": true,\n  \"unmatched_b_hypotheses\": [\"H3\", \"H4\", \"H5\"]\n}\n```",
   "parsed": {
     "matches": [
       {
         "analysis_a_id": "G1",
         "analysis_a_statement": "Castle Doctrine法の採用は殺人・過失致死を増加させる",
         "matched_b_id": "H2",
-        "matched_b_statement": "Castle Doctrine法の採用は、殺人率を増加させる（致死的暴力を誘発する）。",
+        "matched_b_statement": "Castle Doctrine法の採用は、正当防衛の拡大を通じて対人暴力のエスカレーションを招き、殺人・過失致死を増加させる。",
         "match_confidence": "high",
-        "match_reasoning": "両方ともCastle Doctrine法が致死的暴力を増加させると主張している。",
+        "match_reasoning": "両方の仮説はCastle Doctrine法が殺人・過失致死を増加させると主張している。",
         "a_acceptable": [
           "survive"
         ],
@@ -23,9 +23,9 @@
         "analysis_a_id": "G2",
         "analysis_a_statement": "Castle Doctrine法は暴力犯罪（窃盗・強盗・加重暴行）を抑止する",
         "matched_b_id": "H1",
-        "matched_b_statement": "Castle Doctrine法の採用は、州内の暴力犯罪率を低下させる（抑止効果がある）。",
-        "match_confidence": "medium",
-        "match_reasoning": "両方ともCastle Doctrine法が暴力犯罪を抑止すると主張している。",
+        "matched_b_statement": "Castle Doctrine法（Stand Your Ground法）の採用は、州内の暴力犯罪を抑止し、殺人・過失致死、強盗、加重暴行などの発生率を低下させる。",
+        "match_confidence": "high",
+        "match_reasoning": "両方の仮説はCastle Doctrine法が暴力犯罪を抑止すると主張している。",
         "a_acceptable": [
           "reject"
         ],
@@ -38,7 +38,7 @@
         "matched_b_id": null,
         "matched_b_statement": null,
         "match_confidence": "low",
-        "match_reasoning": "分析Bには方法論的問題に関する仮説がない。",
+        "match_reasoning": "分析Bにはstaggered TWFE推定量の方法論的問題に関する仮説がない。",
         "a_acceptable": [
           "reject"
         ],
@@ -52,7 +52,9 @@
     "strength_b": "weak",
     "strength_match": false,
     "unmatched_b_hypotheses": [
-      "H3"
+      "H3",
+      "H4",
+      "H5"
     ]
   },
   "summary": {

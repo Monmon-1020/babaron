@@ -1,45 +1,4 @@
 {
-  "web_browsing_mood": {
-    "case_label": "Kelly & Sharot (2025)",
-    "checkpoints": [
-      {
-        "id": "K1",
-        "stage": "S1",
-        "what_to_check": "hypotheses",
-        "question": "出力の仮説リストの中に、「コンテンツ→気分」の因果方向と「気分→コンテンツ」の因果方向が、独立に評価可能な別々の仮説として立てられているか。「双方向因果」を1つの仮説にまとめているのではなく、各方向が別の仮説になっているか。",
-        "expected": "yes",
-        "source": "因果推論の方法論的原則。2つの分離可能な因果方向を含む研究課題では、各方向を独立に評価すべき。Kelly & Sharot論文自体もStudy 2（閲覧→気分）とStudy 3（気分→閲覧）で方向別に検証している。",
-        "why_important": "双方向を1つの仮説にまとめると、一方のエビデンスが他方の評価を不当に決定してしまう"
-      },
-      {
-        "id": "K2",
-        "stage": "S2",
-        "what_to_check": "identification_assumptions",
-        "question": "出力の識別仮定リストの中に、Study 3の媒介分析における以下の問題への言及があるか：「処置（ネガティブページの閲覧）が、媒介変数（気分の変化）を経由せずに、直接的に結果（後続の閲覧行動）に影響する可能性がある」。つまり、処置→結果の直接効果（媒介変数をバイパスする経路）が排除されていないことへの言及。",
-        "expected": "yes",
-        "source": "因果推論の方法論的原則。媒介分析の識別条件として標準的に議論される（Pearl 2014; VanderWeele 2015）。Kelly & Sharot論文ではStudy 3でネガティブページを読ませた後に自由閲覧させているが、ネガティブページの内容自体が後続の閲覧トピックに直接影響しうる（例：動物虐待の記事を読んだから関連情報を検索した）。",
-        "why_important": "この仮定が満たされない場合、気分→閲覧の因果効果の推定にバイアスが生じる"
-      },
-      {
-        "id": "K3",
-        "stage": "S3",
-        "what_to_check": "identification_assumption_concerns",
-        "question": "出力の識別仮定の懸念評価において、上記の媒介分析の仮定（処置→結果の直接効果の排除）が「uncertain」または「violated」と評価されているか。または、この懸念がresidual_alternativesに記述されているか。",
-        "expected": "yes",
-        "source": "K2と同じ。識別仮定をS2で列挙しただけでなく、S3でその状態を評価し結論に反映しているかを確認する。",
-        "why_important": "識別仮定を列挙しても、結論に反映されなければ意味がない"
-      },
-      {
-        "id": "K4",
-        "stage": "S3",
-        "what_to_check": "strength",
-        "question": "結論の強さ（strength）がstrongではないか（weakまたはholdであるか）。",
-        "expected": "yes",
-        "source": "K2の識別仮定の懸念が解消されていない以上、双方向因果の主張全体をstrongとするのは過大評価",
-        "why_important": "識別仮定に懸念がある場合に結論を段階づけられているかの確認"
-      }
-    ]
-  },
   "orben_przybylski_2019": {
     "case_label": "Orben & Przybylski (2019)",
     "checkpoints": [
@@ -215,6 +174,47 @@
         "expected": "yes",
         "source": "R1と同じ。元著者自身がEbenstein et al. (2017)で局所線形回帰に切り替え、推定値を5.5年から3.1年に改訂したことからも、仕様依存性は元著者が認めた問題。",
         "why_important": "仕様依存性を結論に反映しないと、5.5年という推定値を過度に信頼することになる"
+      }
+    ]
+  },
+  "angrist_krueger_1991": {
+    "case_label": "Angrist & Krueger (1991)",
+    "checkpoints": [
+      {
+        "id": "A1",
+        "stage": "S1",
+        "what_to_check": "hypotheses",
+        "question": "出力の仮説リストの中に、操作変数（生年四半期）が弱い（教育年数との相関が小さい）ことにより推定にバイアスが生じる可能性を扱う仮説があるか。具体的には「操作変数と内生変数の相関が弱い場合、IV推定量のバイアスがOLS推定量に近づく」「弱操作変数により推定が不安定になる」といった内容の仮説。",
+        "expected": "yes",
+        "source": "Bound, Jaeger & Baker (1995, JASA): 生年四半期と教育年数のR²が極めて低く、2SLSの有限標本バイアスがOLSバイアスに近づくことを示した。Staiger & Stock (1997, Econometrica): 第一段階F統計量が10未満の場合を「弱操作変数」と定義し、この論文のデータで検証。",
+        "why_important": "弱操作変数はIV推定の最も基本的な脅威。第一段階の相関が弱いとIV推定量はOLSと同程度にバイアスを持つ"
+      },
+      {
+        "id": "A2",
+        "stage": "S2",
+        "what_to_check": "identification_assumptions",
+        "question": "出力の識別仮定リストの中に、操作変数の関連性（relevance）、すなわち操作変数（生年四半期）と内生変数（教育年数）の相関が十分に強いことが必要であるという仮定への言及があるか。第一段階のF統計量やR²の検定、弱操作変数テストに関する記述を含む。",
+        "expected": "yes",
+        "source": "Bound, Jaeger & Baker (1995): 第一段階の偏R²とF統計量をIV推定の品質指標として常に報告すべきと提言。Staiger & Stock (1997): F<10の閾値を提案。元論文では第一段階F統計量が報告されていない。",
+        "why_important": "操作変数の関連性はIVの3条件（関連性、外生性、排除制約）の一つであり、検証可能な条件"
+      },
+      {
+        "id": "A3",
+        "stage": "S2",
+        "what_to_check": "identification_assumptions",
+        "question": "出力の識別仮定リストの中に、排除制約（生年四半期が賃金に影響する唯一の経路は教育年数を通じてであり、教育年数以外の経路で賃金に影響しないという仮定）への言及があるか。また、この仮定が崩れた場合（季節出生が家庭背景や健康を通じて賃金に影響する場合等）に推定がどう歪むかの記述があるか。",
+        "expected": "yes",
+        "source": "Bound & Jaeger (1996, NBER): 義務教育法の対象外のコホートでも生年四半期と賃金の関連が存在し、排除制約が満たされていない可能性を示した。Buckles & Hungerman (2013, REStat): 季節出生と母親の特性が相関しており、操作変数の外生性に疑問。",
+        "why_important": "排除制約はIVの核心的仮定であり、検証不可能。その妥当性への疑問は元論文の因果的主張の基盤を揺るがす"
+      },
+      {
+        "id": "A4",
+        "stage": "S3",
+        "what_to_check": "strength",
+        "question": "結論の強さ（strength）がstrongではないか（weakまたはholdであるか）。",
+        "expected": "yes",
+        "source": "弱操作変数問題と排除制約違反の両方の懸念があるため、strongと判定するのは過大評価",
+        "why_important": "識別仮定に複数の懸念がある場合にstrongとするのは不適切"
       }
     ]
   }

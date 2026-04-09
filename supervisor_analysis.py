@@ -19,12 +19,12 @@ from typing import Dict, List, Any, Optional
 
 
 CASES = [
-    "web_browsing_mood",
     "orben_przybylski_2019",
     "twenge_2018",
     "cheng_hoekstra",
     "voight_hdl",
     "chen_huairiver",
+    "angrist_krueger_1991",
 ]
 METHODS_WITH_SUPERVISOR = ["scaffold_only", "proposed"]
 SUPERVISED_STAGES = ["S1-CHK", "S2-CHK", "S3-CHK"]

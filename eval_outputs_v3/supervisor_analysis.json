@@ -10,168 +10,124 @@
         "cases": []
       },
       "S3-CHK": {
-        "total_ng": 2,
-        "cases": [
-          "web_browsing_mood",
-          "orben_przybylski_2019"
-        ]
+        "total_ng": 0,
+        "cases": []
       }
     },
     "proposed": {
       "S1-CHK": {
-        "total_ng": 0,
-        "cases": []
+        "total_ng": 4,
+        "cases": [
+          "chen_huairiver",
+          "angrist_krueger_1991"
+        ]
       },
       "S2-CHK": {
         "total_ng": 0,
         "cases": []
       },
       "S3-CHK": {
-        "total_ng": 7,
+        "total_ng": 5,
         "cases": [
-          "orben_przybylski_2019",
-          "twenge_2018",
-          "cheng_hoekstra",
-          "chen_huairiver"
+          "chen_huairiver",
+          "angrist_krueger_1991"
         ]
       }
     }
   },
   "issue_classification": {
     "scaffold_only": {
-      "general_quality": 2,
-      "causal_specific": 1,
-      "examples": [
-        {
-          "case": "web_browsing_mood",
-          "stage": "S3-CHK",
-          "category": "causal_specific",
-          "issue": "S3: 主要未観測があるため strength=strong は不可です。"
-        },
-        {
-          "case": "orben_przybylski_2019",
-          "stage": "S3-CHK",
-          "category": "general_quality",
-          "issue": "S3: H2 の条件一致フラグはちょうど1つだけ true にしてください。"
-        },
-        {
-          "case": "orben_przybylski_2019",
-          "stage": "S3-CHK",
-          "category": "general_quality",
-          "issue": "S3: H2 は survive なのに条件一致フラグが不整合です。【修正方法】decision=surviveを維持したまま、accept_condition_met=true, reject_condition_met=false, hold_condition_met=false に設定してください。decisionを変更してはいけません。"
-        }
-      ]
+      "general_quality": 0,
+      "causal_specific": 0,
+      "examples": []
     },
     "proposed": {
-      "general_quality": 20,
-      "causal_specific": 8,
+      "general_quality": 11,
+      "causal_specific": 18,
       "examples": [
         {
-          "case": "orben_przybylski_2019",
-          "stage": "S3-CHK",
-          "category": "general_quality",
-          "issue": "H3のdecisionがエビデンス方向とS2判定規則に整合していません。E8では親報告で効果がβ<0.001まで消失し、青年自己報告でもβ=-0.046で、S2のH3 accept条件（青年本人報告で|中央値β|>=0.05、親報告で|中央値β|<0.02またはη²p<0.005、統制追加で単調縮小）を満たしていません。少なくとも青年本人報告の閾値未達のため、surviveではなくholdが妥当で"
-        },
-        {
-          "case": "orben_przybylski_2019",
-          "stage": "S3-CHK",
+          "case": "chen_huairiver",
+          "stage": "S1-CHK",
           "category": "causal_specific",
-          "issue": "identification_assumption_concernsにuncertainな仮定（IA1, IA2, IA3, IA4, IA5, IA7）が複数あるにもかかわらず、全体strengthがweakである点は整合的ですが、H3のように閾値未達の仮説をsurviveとしているため、判定表とdecisionの整合性が崩れています。"
+          "issue": "H5はH1の入れ子として扱われており、独立した競合仮説ではないため、仮説間の比較構造が不十分。"
         },
         {
-          "case": "orben_przybylski_2019",
-          "stage": "S3-CHK",
-          "category": "general_quality",
-          "issue": "which_hypotheses_surviveにH1-H4すべてが含まれていますが、H3はhold相当でありsurviveに入れるのは過剰です。"
+          "case": "chen_huairiver",
+          "stage": "S1-CHK",
+          "category": "causal_specific",
+          "issue": "hypothesis_relations に全ペアの宣言があるが、H5を含む関係が nested で、S1の目的である『競合し、負けうる形』の仮説セットとしては、効果量仮説が主要因果仮説に吸収されている。"
         },
         {
-          "case": "orben_przybylski_2019",
+          "case": "chen_huairiver",
           "stage": "S3-CHK",
           "category": "general_quality",
           "issue": "S3: H1 は survive なのに条件一致フラグが不整合です。【修正方法】decision=surviveを維持したまま、accept_condition_met=true, reject_condition_met=false, hold_condition_met=false に設定してください。decisionを変更してはいけません。"
         },
         {
-          "case": "orben_przybylski_2019",
-          "stage": "S3-CHK",
-          "category": "general_quality",
-          "issue": "S3: H4 は survive なのに条件一致フラグが不整合です。【修正方法】decision=surviveを維持したまま、accept_condition_met=true, reject_condition_met=false, hold_condition_met=false に設定してください。decisionを変更してはいけません。"
-        },
-        {
-          "case": "orben_przybylski_2019",
-          "stage": "S3-CHK",
-          "category": "general_quality",
-          "issue": "H2のdecisionがsurviveになっているが、S2の判定規則では『効果が小さい』場合はaccept方向であり、which_hypotheses_survive に H2 を入れるのは判定表としては整合する一方、decision語彙が accept/reject/hold ではなく survive を使っているため、必須チェック1・3の形式整合が崩れている。"
-        },
-        {
-          "case": "orben_przybylski_2019",
-          "stage": "S3-CHK",
-          "category": "general_quality",
-          "issue": "H2は『実質的に小さい』ことを支持する証拠に基づく仮説であり、rejectすべきではないが、decision が survive で固定されているため、S2で固定した判定規則に従う採否表現として不適切である。"
-        },
-        {
-          "case": "orben_przybylski_2019",
-          "stage": "S3-CHK",
+          "case": "angrist_krueger_1991",
+          "stage": "S1-CHK",
           "category": "causal_specific",
-          "issue": "strength=weak は妥当だが、identification_assumption_concerns に uncertain が多数あるため、もし将来の再解釈で strong に近づける余地を残す書き方になっており、現状の結論自体は問題ないものの、判定語彙の不統一が致命的。"
+          "issue": "hypothesis_relations が全ペアについて宣言されていません。H1-H5 の全10組のうち、H1-H5 と H2-H5 の関係が未宣言です。"
+        },
+        {
+          "case": "angrist_krueger_1991",
+          "stage": "S1-CHK",
+          "category": "causal_specific",
+          "issue": "研究課題は教育年数→賃金の因果効果を問う一方、横断・観察データで区別すべき逆方向因果（賃金→教育年数）を独立仮説として立てていますが、H2 の反証条件が『賃金期待や賃金水準の変化が教育年数を先行して説明する証拠がなく』と曖昧で、どの観測で H2 が負けるかが十分に明示されていません。"
+        },
+        {
+          "case": "angrist_krueger_1991",
+          "stage": "S1-CHK",
+          "category": "general_quality",
+          "issue": "H1 と H5 は実質的に同じ方向の主張で、H5 は効果量の大小を述べるだけの下位命題ですが、H1-H5 の関係が未宣言であるため、仮説間の競合構造が完全に定義されていません。"
+        },
+        {
+          "case": "angrist_krueger_1991",
+          "stage": "S1-CHK",
+          "category": "causal_specific",
+          "issue": "hypothesis_relations が全ペアについて宣言されていません。H1-H2, H1-H3, H1-H4, H1-H5, H2-H3, H2-H4, H2-H5, H3-H4, H3-H5, H4-H5 の10組はあるが、H5を含む関係が nested/independent で整理されている一方、H1-H5 が nested であることの妥当性はあるものの、全仮説が同一の競合空間で比"
+        },
+        {
+          "case": "angrist_krueger_1991",
+          "stage": "S1-CHK",
+          "category": "causal_specific",
+          "issue": "研究課題は『教育年数は賃金に因果効果を持つか』『生年四半期は教育年数の有効な操作変数か』という単一の因果方向を主に問うているのに、逆方向因果（賃金期待→教育年数）が独立仮説として立てられている点はよい一方、横断データでA→Bを主張する際に必要な代替説明としての逆因果を、H2の反証条件が『出生四半期が教育年数を予測しない』などIVの妥当性に寄りすぎており、どの観測でH2が負けるかが十分に明確ではあり"
         }
       ]
     }
   },
   "designer_changes": {
-    "scaffold_only": {
-      "web_browsing_mood": {
-        "S3": {
+    "scaffold_only": {},
+    "proposed": {
+      "chen_huairiver": {
+        "S1": {
           "retries": 1,
           "changes": [
             {
-              "field": "strength",
-              "before": "strong",
-              "after": "weak"
-            }
-          ]
-        }
-      }
-    },
-    "proposed": {
-      "orben_przybylski_2019": {
-        "S3": {
-          "retries": 4,
-          "changes": [
-            {
-              "field": "H1.decision",
-              "before": "survive",
-              "after": "hold"
-            },
-            {
-              "field": "H3.decision",
-              "before": "survive",
-              "after": "hold"
-            },
-            {
-              "field": "H4.decision",
-              "before": "survive",
-              "after": "hold"
+              "field": "hypothesis_relations_count",
+              "before": 9,
+              "after": 10
             }
           ]
         }
       },
-      "chen_huairiver": {
-        "S3": {
-          "retries": 1,
+      "angrist_krueger_1991": {
+        "S1": {
+          "retries": 3,
           "changes": [
             {
-              "field": "strength",
-              "before": "weak",
-              "after": "hold"
-            },
-            {
-              "field": "H1.decision",
-              "before": "survive",
-              "after": "hold"
-            },
+              "field": "hypothesis_relations_count",
+              "before": 8,
+              "after": 10
+            }
+          ]
+        },
+        "S3": {
+          "retries": 4,
+          "changes": [
             {
               "field": "H2.decision",
-              "before": "survive",
+              "before": "reject",
               "after": "hold"
             }
           ]

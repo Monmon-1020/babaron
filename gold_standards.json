@@ -1,35 +1,4 @@
 {
-  "web_browsing_mood": {
-    "case_label": "Kelly & Sharot (2025)",
-    "gold_basis": "methodological_principles",
-    "gold_basis_note": "出版後16ヶ月でStudy 3の識別仮定を検討した査読付き後続文献なし。因果推論の方法論的原則に基づいて定義",
-    "hypotheses": [
-      {
-        "id": "G1",
-        "statement": "ネガティブなウェブコンテンツの閲覧は気分を悪化させる（コンテンツ→気分の因果効果）",
-        "expected_decision": "survive",
-        "acceptable_decisions": ["survive"],
-        "source": "Study 2のランダム割付実験により支持。批判的後続文献なし"
-      },
-      {
-        "id": "G2",
-        "statement": "気分の悪化はネガティブなウェブコンテンツの閲覧を増加させる（気分→コンテンツの因果効果）",
-        "expected_decision": "survive",
-        "acceptable_decisions": ["survive", "hold"],
-        "source": "Study 3の媒介分析で示唆。ただし識別仮定（処置→結果の直接効果なし）の妥当性が未検証。Pearl (2014), VanderWeele (2015)により媒介分析の識別仮定は一般に強い仮定"
-      },
-      {
-        "id": "G3",
-        "statement": "閲覧と気分の関連は第三要因（精神病理傾向等）による見かけの相関であり、直接の因果効果はない",
-        "expected_decision": "reject",
-        "acceptable_decisions": ["reject"],
-        "source": "Study 2-3のランダム割付により短期的な直接効果が確認されている"
-      }
-    ],
-    "expected_strength": "weak",
-    "acceptable_strengths": ["weak"],
-    "strength_source": "H2の因果方向に識別仮定の懸念が未解消。双方向因果の主張全体としてはweak"
-  },
   "orben_przybylski_2019": {
     "case_label": "Orben & Przybylski (2019)",
     "gold_basis": "subsequent_literature",
@@ -39,26 +8,35 @@
         "id": "G1",
         "statement": "デジタルテクノロジー利用は青少年の幸福感に実質的な負の因果効果を持つ",
         "expected_decision": "reject",
-        "acceptable_decisions": ["reject"],
+        "acceptable_decisions": [
+          "reject"
+        ],
         "source": "Vuorre & Przybylski (2024): 168カ国200万人で小さく一貫しない関連。Allcott et al. (2020, AER): Facebook停止実験で0.09SD。全体として実質的な因果効果は否定的"
       },
       {
         "id": "G2",
         "statement": "デジタルテクノロジー利用と幸福感の関連は存在するが、実質的に無視できるほど小さい",
         "expected_decision": "survive",
-        "acceptable_decisions": ["survive", "hold"],
+        "acceptable_decisions": [
+          "survive",
+          "hold"
+        ],
         "source": "平均0.4%は再現。しかしTwenge et al. (2022, Acta Psychologica): 女子×SNSでβ=−0.20に上昇。Orben et al. (2022, Nature Communications): 年齢・性別特異的感受性窓を報告。無意味という強い主張は修正が必要"
       },
       {
         "id": "G3",
         "statement": "関連の大きさは分析仕様（変数の操作化、サンプル選択等）に依存する",
         "expected_decision": "survive",
-        "acceptable_decisions": ["survive"],
+        "acceptable_decisions": [
+          "survive"
+        ],
         "source": "最も頑健に確立された知見。Orben自身のSCA、Twenge et al. (2022)の再分析が直接確認"
       }
     ],
     "expected_strength": "weak",
-    "acceptable_strengths": ["weak"],
+    "acceptable_strengths": [
+      "weak"
+    ],
     "strength_source": "因果方向は横断データで未同定。サブグループ異質性が発見され無意味とは断定できなくなった"
   },
   "twenge_2018": {
@@ -70,26 +48,36 @@
         "id": "G1",
         "statement": "スクリーンタイムの増加は青少年の幸福感低下の原因である",
         "expected_decision": "hold",
-        "acceptable_decisions": ["survive", "hold"],
+        "acceptable_decisions": [
+          "survive",
+          "hold"
+        ],
         "source": "Heffer et al. (2019): 縦断でSNS→抑うつの前方予測なし。Jensen et al. (2019): 縦断+EMAで関連なし。Coyne et al. (2020): 個人内変化として予測力なし。ただしHaidt (2024)は因果主張を展開し完全棄却はされていない"
       },
       {
         "id": "G2",
         "statement": "幸福感低下は経済的要因や他の時代的変化で説明できる",
         "expected_decision": "survive",
-        "acceptable_decisions": ["survive", "hold"],
+        "acceptable_decisions": [
+          "survive",
+          "hold"
+        ],
         "source": "McGorry et al. (2025, Frontiers in Psychiatry): 経済不安定、教育圧力、気候不安等の複合要因。多重決定の見方が支持"
       },
       {
         "id": "G3",
         "statement": "因果は逆方向：幸福感が低い青少年がスクリーンタイムを増やす",
         "expected_decision": "survive",
-        "acceptable_decisions": ["survive"],
+        "acceptable_decisions": [
+          "survive"
+        ],
         "source": "Heffer et al. (2019): 思春期女子で抑うつ→SNS使用増加を予測。Odgers & Jensen (2020): 逆因果の証拠の方が一貫"
       }
     ],
     "expected_strength": "weak",
-    "acceptable_strengths": ["weak"],
+    "acceptable_strengths": [
+      "weak"
+    ],
     "strength_source": "横断データからの因果推論は方法論的に不十分。大多数のレビューが強い因果主張には証拠不十分と結論。Odgers (2024, Nature)"
   },
   "cheng_hoekstra": {
@@ -101,26 +89,34 @@
         "id": "G1",
         "statement": "Castle Doctrine法の採用は殺人・過失致死を増加させる",
         "expected_decision": "survive",
-        "acceptable_decisions": ["survive"],
+        "acceptable_decisions": [
+          "survive"
+        ],
         "source": "McClellan & Tekin (2017, JHR): 独立データで約8%増再現。Degli Esposti et al. (2022, JAMA Network Open): 23州でIRR=1.08。RAND (2024): 最高評価supportive evidence。6つの高品質研究すべてが増加方向"
       },
       {
         "id": "G2",
         "statement": "Castle Doctrine法は暴力犯罪（窃盗・強盗・加重暴行）を抑止する",
         "expected_decision": "reject",
-        "acceptable_decisions": ["reject"],
+        "acceptable_decisions": [
+          "reject"
+        ],
         "source": "Yakubovich et al. (2021, AJPH): 25研究の系統的レビューで抑止の証拠なし。RAND (2024): 抑止を支持するエビデンスなし"
       },
       {
         "id": "G3",
         "statement": "推定された殺人増加はstaggered TWFE推定量の方法論的問題（負のウェイト、時間的異質性）による見かけの効果である",
         "expected_decision": "reject",
-        "acceptable_decisions": ["reject"],
+        "acceptable_decisions": [
+          "reject"
+        ],
         "source": "Cunningham (2021): このデータで検証し異質性バイアスの証拠はほとんどない。非TWFE手法でも同結果。RAND: バイアスの証拠をほとんど見出さなかった"
       }
     ],
     "expected_strength": "strong",
-    "acceptable_strengths": ["strong"],
+    "acceptable_strengths": [
+      "strong"
+    ],
     "strength_source": "複数の独立チーム、異なるデータ源（UCR, Vital Statistics）、異なる手法（DiD, interrupted time series, 合成コントロール, ベイズ）が約8%増に収束。RAND最高評価。銃政策文献で最も再現された知見の一つ"
   },
   "voight_hdl": {
@@ -132,19 +128,25 @@
         "id": "G1",
         "statement": "HDL-C上昇は心筋梗塞リスクを因果的に低下させる（HDL仮説）",
         "expected_decision": "reject",
-        "acceptable_decisions": ["reject"],
+        "acceptable_decisions": [
+          "reject"
+        ],
         "source": "Holmes et al. (2015, EHJ): 制限付きスコアでシグナル消失。Richardson et al. (2020, PLOS Medicine): ApoB調整で帰無。CETP阻害薬3剤失敗。パラダイムがHDL-C上昇→ApoB低下に移行済み"
       },
       {
         "id": "G2",
         "statement": "HDL-Cと心筋梗塞の観察的逆相関は、LDL-Cやトリグリセリドとの交差多面発現による見かけの関連である",
         "expected_decision": "survive",
-        "acceptable_decisions": ["survive"],
+        "acceptable_decisions": [
+          "survive"
+        ],
         "source": "Holmes et al. (2015): 多面発現SNP除外でシグナル消失が直接証拠。Richardson et al. (2020): ApoB調整で帰無。Zuber et al. (2021): 確認"
       }
     ],
     "expected_strength": "strong",
-    "acceptable_strengths": ["strong"],
+    "acceptable_strengths": [
+      "strong"
+    ],
     "strength_source": "単変量MR、多変量MR、臨床試験の3種が収束。MRの最も成功した適用例。教科書的事例として広く引用"
   },
   "chen_huairiver": {
@@ -156,26 +158,75 @@
         "id": "G1",
         "statement": "粒子状大気汚染への長期曝露は平均寿命を短縮する",
         "expected_decision": "survive",
-        "acceptable_decisions": ["survive"],
+        "acceptable_decisions": [
+          "survive"
+        ],
         "source": "Ebenstein et al. (2017, PNAS): 改訂推定で方向維持（3.1年）。Fan et al. (2020): 時間的RDDで因果連鎖を独立確認。国際疫学と整合"
       },
       {
         "id": "G2",
         "statement": "推定された5.5年という効果の大きさは3次多項式の選択に駆動されたものであり、効果量の信頼性が低い",
         "expected_decision": "survive",
-        "acceptable_decisions": ["survive"],
+        "acceptable_decisions": [
+          "survive"
+        ],
         "source": "Gelman & Zelizer (2015): 線形で1.6年（非有意）。次数で大幅変動。91年の非現実的含意。元著者がEbenstein et al. (2017)で局所線形に切替え3.1年に改訂"
       },
       {
         "id": "G3",
         "statement": "淮河南北の平均寿命差は暖房政策以外の地域差（経済水準、医療アクセス等）で説明できる",
         "expected_decision": "hold",
-        "acceptable_decisions": ["hold"],
+        "acceptable_decisions": [
+          "hold"
+        ],
         "source": "共変量バランス等は実施済みだが淮河は中国の根本的南北境界であり完全統制困難。Pope & Dockery (2013)も効果量が米国推定より大きいことを指摘"
       }
     ],
     "expected_strength": "weak",
-    "acceptable_strengths": ["weak"],
+    "acceptable_strengths": [
+      "weak"
+    ],
     "strength_source": "因果の方向は支持されるが効果量が多項式仕様に大きく依存。改訂推定3.1年も米国推定の1.5-2倍"
+  },
+  "angrist_krueger_1991": {
+    "case_label": "Angrist & Krueger (1991)",
+    "gold_basis": "subsequent_literature",
+    "gold_basis_note": "Bound, Jaeger & Baker (1995) 弱操作変数バイアス、Bound & Jaeger (1996) 排除制約違反、Staiger & Stock (1997) 弱IV漸近理論、Buckles & Hungerman (2013) 季節出生の外生性",
+    "hypotheses": [
+      {
+        "id": "G1",
+        "statement": "教育年数は賃金に正の因果効果を持ち、生年四半期はその有効な操作変数である",
+        "expected_decision": "survive",
+        "acceptable_decisions": [
+          "survive",
+          "hold"
+        ],
+        "source": "教育の収益率自体は広く支持されている。ただし生年四半期IVの妥当性には重大な懸念。Hoogerheide & van Dijk (2006)は完全に無効ではないが南部州に依存すると結論"
+      },
+      {
+        "id": "G2",
+        "statement": "IV推定値は弱操作変数バイアスにより信頼できない",
+        "expected_decision": "survive",
+        "acceptable_decisions": [
+          "survive"
+        ],
+        "source": "Bound, Jaeger & Baker (1995, JASA): 生年四半期と教育年数の相関が弱く、大標本でも2SLS推定にバイアスが残る。Staiger & Stock (1997): 第一段階F<10で弱IV問題が深刻"
+      },
+      {
+        "id": "G3",
+        "statement": "排除制約は満たされていない（生年四半期が教育以外の経路で賃金に影響する）",
+        "expected_decision": "survive",
+        "acceptable_decisions": [
+          "survive",
+          "hold"
+        ],
+        "source": "Bound & Jaeger (1996): 義務教育法対象外コホートでも生年四半期と賃金の関連あり。Buckles & Hungerman (2013): 季節出生と家庭背景（母親の教育等）が相関"
+      }
+    ],
+    "expected_strength": "weak",
+    "acceptable_strengths": [
+      "weak"
+    ],
+    "strength_source": "弱操作変数問題と排除制約違反の両方の懸念が解消されていない"
   }
 }

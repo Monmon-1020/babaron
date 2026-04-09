@@ -25,12 +25,12 @@ from typing import Any, Dict, List, Optional, Tuple
 
 
 CASES = [
-    "web_browsing_mood",
     "orben_przybylski_2019",
     "twenge_2018",
     "cheng_hoekstra",
     "voight_hdl",
     "chen_huairiver",
+    "angrist_krueger_1991",
 ]
 
 METHODS = ["baseline", "scaffold_only", "rubric_only", "proposed"]
