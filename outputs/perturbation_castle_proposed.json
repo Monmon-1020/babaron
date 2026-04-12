@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "case_id": "castle",
+    "condition": "proposed",
+    "model": "gpt-5.4-mini",
+    "timestamp": "2026-04-12T09:05:19.056189+00:00"
+  },
+  "perturbation": {
+    "perturbation": "parallel_trends_violation",
+    "description": "Added upward pre-treatment trend to treated states' l_homicide (+0.04 per year before treatment), violating parallel trends.",
+    "target_assumption": "平行トレンド仮定",
+    "magnitude": "0.04 per year (approx 50% of treatment effect)"
+  },
+  "detection_level": 1,
+  "detection_details": {
+    "original_strength": null,
+    "perturbed_strength": null,
+    "strength_decreased": false,
+    "concern_relevant": false,
+    "mention_in_s3": true,
+    "perturbed_concerns": [
+      "平行トレンド違反によるバイアス",
+      "犯罪増加への反応としての法導入（逆因果）",
+      "州間スピルオーバー",
+      "同時期の州政策・社会経済変化",
+      "TWFE の仕様依存性（特に staggered adoption における解釈上の問題）",
+      "導入後の正の係数が真の効果か、事前トレンドの延長かを区別できないこと"
+    ]
+  },
+  "original_output_file": "run_castle_proposed.json",
+  "perturbed_output_file": "run_castle_proposed_perturbed.json"
+}

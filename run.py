@@ -166,11 +166,134 @@ def run_tool(data, method_key: str, params: dict) -> dict:
         }
 
 
+def generate_sensitivity_variants(method_key: str, params: dict, data) -> list[dict]:
+    """
+    Generate alternative parameter sets for sensitivity analysis.
+    Returns a list of dicts: {"label": str, "params": dict}.
+    Typically 2-3 variants per method.
+    """
+    variants = []
+
+    if method_key == "did":
+        # Variant 1: without covariates
+        no_cov_params = {k: v for k, v in params.items()}
+        no_cov_params["covariates"] = None
+        variants.append({"label": "DiD: 共変量なし", "params": no_cov_params})
+
+        # Variant 2: with subset of covariates (economic only)
+        if params.get("covariates"):
+            econ_covs = [c for c in params["covariates"]
+                         if c in ("unemployrt", "poverty", "l_income")]
+            if econ_covs:
+                econ_params = {k: v for k, v in params.items()}
+                econ_params["covariates"] = econ_covs
+                variants.append({"label": "DiD: 経済変数のみ", "params": econ_params})
+
+    elif method_key == "rdd":
+        # Variant 1: half bandwidth
+        half_bw_params = {k: v for k, v in params.items()}
+        half_bw_params["bandwidth"] = 0.125  # half of typical ~0.25
+        variants.append({"label": "RDD: バンド幅 0.125 (狭い)", "params": half_bw_params})
+
+        # Variant 2: double bandwidth
+        double_bw_params = {k: v for k, v in params.items()}
+        double_bw_params["bandwidth"] = 0.5  # double of typical ~0.25
+        variants.append({"label": "RDD: バンド幅 0.5 (広い)", "params": double_bw_params})
+
+    elif method_key == "ipw":
+        # Drop one covariate at a time (pick 2-3 substantively important ones)
+        covariates = params.get("covariates", [])
+        # Drop wt71 (baseline weight)
+        if "wt71" in covariates:
+            drop_params = {k: v for k, v in params.items()}
+            drop_params["covariates"] = [c for c in covariates if c != "wt71"]
+            variants.append({"label": "IPW: wt71除外", "params": drop_params})
+        # Drop smokeintensity
+        if "smokeintensity" in covariates:
+            drop_params = {k: v for k, v in params.items()}
+            drop_params["covariates"] = [c for c in covariates if c != "smokeintensity"]
+            variants.append({"label": "IPW: smokeintensity除外", "params": drop_params})
+
+    elif method_key == "matching":
+        covariates = params.get("covariates", [])
+        # Drop re74
+        if "re74" in covariates:
+            drop_params = {k: v for k, v in params.items()}
+            drop_params["covariates"] = [c for c in covariates if c != "re74"]
+            variants.append({"label": "Matching: re74除外", "params": drop_params})
+        # Drop re75
+        if "re75" in covariates:
+            drop_params = {k: v for k, v in params.items()}
+            drop_params["covariates"] = [c for c in covariates if c != "re75"]
+            variants.append({"label": "Matching: re75除外", "params": drop_params})
+
+    elif method_key == "ols":
+        regressors = params.get("regressors", [])
+        if len(regressors) > 1:
+            # Drop last regressor
+            drop_params = {k: v for k, v in params.items()}
+            drop_params["regressors"] = regressors[:-1]
+            variants.append({
+                "label": f"OLS: {regressors[-1]}除外",
+                "params": drop_params,
+            })
+            # Drop first regressor
+            drop_params2 = {k: v for k, v in params.items()}
+            drop_params2["regressors"] = regressors[1:]
+            variants.append({
+                "label": f"OLS: {regressors[0]}除外",
+                "params": drop_params2,
+            })
+
+    return variants
+
+
+def run_sensitivity(data, method_key: str, params: dict) -> list[dict]:
+    """
+    Run sensitivity analyses for the given method and parameters.
+    Returns list of {"label": str, "result": tool_result_dict}.
+    """
+    variants = generate_sensitivity_variants(method_key, params, data)
+    results = []
+    for variant in variants:
+        try:
+            result = run_tool(data, method_key, variant["params"])
+            results.append({
+                "label": variant["label"],
+                "params": {k: v for k, v in variant["params"].items() if k != "data"},
+                "result": {
+                    "method": result["method"],
+                    "summary": result["summary"],
+                    "estimates": result["estimates"],
+                },
+            })
+        except Exception as e:
+            results.append({
+                "label": variant["label"],
+                "params": {k: v for k, v in variant["params"].items() if k != "data"},
+                "result": {"method": method_key, "summary": f"Error: {e}", "estimates": {}},
+            })
+    return results
+
+
+def format_sensitivity_summary(sensitivity_results: list[dict]) -> str:
+    """Format sensitivity results as a text summary for the LLM."""
+    if not sensitivity_results:
+        return ""
+    lines = ["\n\n=== 感度分析結果 ==="]
+    for sr in sensitivity_results:
+        lines.append(f"\n--- {sr['label']} ---")
+        lines.append(sr["result"]["summary"])
+    return "\n".join(lines)
+
+
 def run_single(
     case_id: str,
     condition: str,
     model: str = "gpt-5.4-mini",
     out_dir: str = "outputs",
+    sensitivity: bool = False,
+    anonymize: bool = False,
 ) -> dict:
     """
     Run a single case x condition experiment.
@@ -182,7 +305,13 @@ def run_single(
 
     # 1. Load case data
     print("Loading case data...")
-    case_data = cases.load(case_id)
+    if anonymize:
+        import anonymize as anon_module
+        case_data, var_mapping = anon_module.anonymize_case(case_id)
+        print(f"  Anonymized: {len(var_mapping)} variables mapped")
+    else:
+        case_data = cases.load(case_id)
+        var_mapping = None
     data = case_data["data"]
 
     # 2. Format prompt
@@ -222,9 +351,19 @@ def run_single(
     tool_result = run_tool(data, method_key, params)
     print(f"  Tool completed. Method: {tool_result['method']}")
 
+    # 6b. Run sensitivity analysis (optional)
+    sensitivity_results = []
+    if sensitivity:
+        print("Running sensitivity analyses...")
+        sensitivity_results = run_sensitivity(data, method_key, params)
+        print(f"  Completed {len(sensitivity_results)} sensitivity runs")
+
     # 7. Send continuation prompt with tool results
     print("Calling LLM for S3...")
-    continuation = prompts.format_continuation(tool_result["summary"])
+    tool_summary = tool_result["summary"]
+    if sensitivity and sensitivity_results:
+        tool_summary += format_sensitivity_summary(sensitivity_results)
+    continuation = prompts.format_continuation(tool_summary, include_sensitivity=sensitivity)
     messages_phase2 = [
         {"role": "user", "content": initial_prompt},
         {"role": "assistant", "content": s0_s2b_output},
@@ -246,6 +385,8 @@ def run_single(
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "phase1_time_s": round(t1 - t0, 2),
             "phase2_time_s": round(t3 - t2, 2),
+            "sensitivity": sensitivity,
+            "anonymized": anonymize,
         },
         "prompt": {
             "initial_prompt": initial_prompt,
@@ -268,10 +409,23 @@ def run_single(
         },
     }
 
+    # Add sensitivity results if available
+    if sensitivity and sensitivity_results:
+        output["sensitivity"] = _make_serializable(sensitivity_results)
+
+    # Add anonymization mapping if used
+    if var_mapping:
+        output["anonymization"] = {"variable_mapping": var_mapping}
+
     # Save output
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
-    filename = f"run_{case_id}_{condition}.json"
+    suffix_parts = [case_id, condition]
+    if anonymize:
+        suffix_parts.append("anon")
+    if sensitivity:
+        suffix_parts.append("sens")
+    filename = f"run_{'_'.join(suffix_parts)}.json"
     filepath = out_path / filename
 
     with open(filepath, "w", encoding="utf-8") as f:
@@ -328,6 +482,16 @@ def main():
         default="outputs",
         help="Output directory",
     )
+    parser.add_argument(
+        "--sensitivity",
+        action="store_true",
+        help="Run sensitivity analyses with alternative parameters",
+    )
+    parser.add_argument(
+        "--anonymize",
+        action="store_true",
+        help="Anonymize variable names before running",
+    )
     args = parser.parse_args()
 
     # Resolve case list
@@ -347,7 +511,11 @@ def main():
     for case_id in case_ids:
         for condition in conditions:
             try:
-                result = run_single(case_id, condition, args.model, args.out)
+                result = run_single(
+                    case_id, condition, args.model, args.out,
+                    sensitivity=args.sensitivity,
+                    anonymize=args.anonymize,
+                )
                 results.append(result)
             except Exception as e:
                 print(f"\nError running {case_id}/{condition}: {e}")

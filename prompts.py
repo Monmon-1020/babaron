@@ -279,14 +279,29 @@ def format_prompt(case_data: dict, condition: str) -> str:
     return common + "\n" + output_fmt + "\n" + instructions
 
 
-def format_continuation(tool_results: str) -> str:
+SENSITIVITY_ADDENDUM = """\
+
+感度分析の結果も上記に含まれています。
+S3を記述する際には、メインの分析結果だけでなく感度分析の結果も考慮してください。
+特に以下の点を検討してください:
+- モデリング選択を変えた場合に推定値がどの程度変動するか
+- 推定値の符号や統計的有意性が変わるかどうか
+- 変動が大きい場合、結論の強さ（strength）にどう影響するか
+"""
+
+
+def format_continuation(tool_results: str, include_sensitivity: bool = False) -> str:
     """
     Format the continuation prompt with tool results.
 
     Args:
         tool_results: formatted string of tool execution results
+        include_sensitivity: whether to add sensitivity analysis instructions
 
     Returns:
         Continuation prompt string
     """
-    return CONTINUATION_PROMPT.format(tool_results=tool_results)
+    prompt = CONTINUATION_PROMPT.format(tool_results=tool_results)
+    if include_sensitivity:
+        prompt += SENSITIVITY_ADDENDUM
+    return prompt

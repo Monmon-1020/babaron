@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-04-12T09:05:19.057550+00:00",
+  "n_experiments": 1,
+  "per_experiment": [
+    {
+      "case_id": "castle",
+      "condition": "proposed",
+      "perturbation": "parallel_trends_violation",
+      "target_assumption": "平行トレンド仮定",
+      "detection_level": 1,
+      "original_strength": null,
+      "perturbed_strength": null,
+      "strength_decreased": false,
+      "concern_relevant": false
+    }
+  ],
+  "per_condition": {
+    "proposed": {
+      "total": 1,
+      "n": 1,
+      "levels": {
+        "0": 0,
+        "1": 1,
+        "2": 0
+      }
+    }
+  }
+}
