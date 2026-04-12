@@ -4,171 +4,136 @@
 
 ## プロジェクト概要
 
-観察的因果推論における科学的主張形成の監督プロトコル（3層構造）の実装と評価。
-4条件の2×2デザイン（rubric有無 × supervisor有無）で、6つの因果推論ケースを評価。
+観察的因果推論における科学的主張形成の監督プロトコル（rubric埋め込みプロンプト）の実装と評価。
+baseline（汎用プロンプト）vs proposed（因果推論特化rubricプロンプト）の2条件比較。
+4つの教科書データセットに対し、LLMが手法選択→統計分析実行→結論導出を行い、教科書ベースのチェックリストで採点する。
 
-## 4条件の設計
+## 2条件の設計
 
-|  | Supervisorなし | Supervisorあり |
-|--|--------------|-------------|
-| **Rubricなし** | `baseline` | `scaffold_only` |
-| **Rubricあり** | `rubric_only` | `proposed` |
+| 条件 | プロンプト | 手法選択 | 識別仮定の記述 |
+|------|---------|---------|------------|
+| `baseline` | 汎用指示（「適切な手法を選び仮定を記述せよ」） | LLM自律 | 自由記述 |
+| `proposed` | 因果推論特化rubric（6手法の識別仮定・適用条件・使い分けを明示） | LLM自律（知識付き） | 構造化ガイダンス |
 
-## 6つの評価対象ケース
+## 4つの評価対象ケース
 
-| ケースID | 論文 | 因果推論手法 |
-|---------|------|-----------|
-| `orben_przybylski_2019` | Orben & Przybylski (2019) | Specification Curve Analysis |
-| `twenge_2018` | Twenge et al. (2018) | 横断+時系列 |
-| `cheng_hoekstra` | Cheng & Hoekstra (2013) | staggered TWFE DiD |
-| `voight_hdl` | Voight et al. (2012) | Mendelian Randomization |
-| `chen_huairiver` | Chen et al. (2013) | 地理的RDD |
-| `angrist_krueger_1991` | Angrist & Krueger (1991) | 操作変数法(IV/2SLS) |
-
-Kelly & Sharot (2025) は正式評価からは除外（後続文献なし）。cases.jsonには残存。
+| ケースID | データセット | 推奨手法 | 教科書 |
+|---------|-----------|---------|------|
+| `castle` | Cheng & Hoekstra (2013) | DiD (TWFE) | Cunningham §9 |
+| `close_elections` | Lee, Moretti & Butler (2004) | RDD (Sharp) | Cunningham §6 |
+| `nhefs` | NHEFS禁煙体重データ | IPW | Hernán & Robins Ch.12 |
+| `nsw` | LaLonde/NSW職業訓練 | マッチング (PSM) | Cunningham §5 |
 
 ## ファイル構成
 
-### ソースコード（メイン）
+### ソースコード
 
 ```
-run.py                  # メインランナー。4条件分岐 (--method baseline/scaffold_only/rubric_only/proposed)
-schemas.py              # JSONスキーマバリデーション (extended パラメータで rubric版/non-rubric版を切替)
-llm_client.py           # OpenAI API クライアント (gpt-5.4-mini用 max_completion_tokens=8000)
-prompt_store.py         # 4プロファイルのプロンプトマッピング
-rubric.py               # Layer 2 ルーブリック評価 (14項目28点)
-```
-
-### 評価スクリプト
-
-```
-blind_eval.py           # 評価A: gpt-4oによるブラインド突合 (S3最終判定 vs gold standard)
-process_eval.py         # 評価B: gpt-4oによる推論ステップ評価 (後続文献の懸念検出率)
-supervisor_analysis.py  # 評価C: Supervisor分析 (NG回数・分類・Designer変更)
-metrics.py              # Rubric独立指標 (overclaim抑制率、evidence grounding率)
+cases.py              # 4ケースのデータローダー (causaldata パッケージ)
+tools.py              # 6つの統計ツール (DiD/IV/RDD/Matching/IPW/OLS)
+prompts.py            # baseline/proposed プロンプト定義
+run.py                # メインランナー (2フェーズLLMフロー: S0-S2b → ツール実行 → S3)
+evaluate.py           # チェックリスト採点スクリプト (gpt-4oブラインド採点)
 ```
 
 ### 設定・定義ファイル
 
 ```
-cases.json              # 全ケースのS0 (研究概要) + S2_EVID (エビデンス) 定義
-gold_standards.json     # 6ケースのgold standard (後続文献ベース、acceptable_decisions付き)
-detection_checkpoints.json  # 評価Bの21個のcheckpoint定義 (後続文献の出典付き)
-.env                    # OPENAI_API_KEY (gitignore対象)
-.gitignore              # .env, __pycache__
+evaluation_checklist_final.md  # 4ケース分のGold Standard（教科書引用付き、0/1/2採点基準）
+prompt_design.md               # プロンプト設計書（baseline/proposed の全文）
+.env                           # OPENAI_API_KEY (gitignore対象)
+.gitignore                     # .env, __pycache__, *.pdf
 ```
 
-### プロンプト
+### 実行結果
 
 ```
-prompts/
-  baseline_designer_s1.txt    # baseline/scaffold_only用 Designer (汎用)
-  baseline_designer_s2.txt
-  baseline_designer_s3.txt
-  rubric_designer_s1.txt      # rubric_only/proposed用 Designer (5仮説カテゴリ必須化、識別仮定3カテゴリ必須化)
-  rubric_designer_s2.txt
-  rubric_designer_s3.txt
-  scaffold_supervisor_s1.txt  # scaffold_only用 Supervisor (汎用、rubric固有チェックなし)
-  scaffold_supervisor_s2.txt
-  scaffold_supervisor_s3.txt
-  rubric_supervisor_s1.txt    # proposed用 Supervisor (rubric固有チェック: 逆因果欠如検出、横断データ限界検出等)
-  rubric_supervisor_s2.txt
-  rubric_supervisor_s3.txt
-  evidence_server.txt         # Evidence Server (prompt_store.pyから参照、実際にはcases.jsonで代替)
+outputs/                       # 4ケース×2条件 = 8件の実行ログ (JSON)
+  run_{case}_{condition}.json  # 各実行の全出力（metadata, prompt, llm_output, tool）
+
+eval_outputs/                  # チェックリスト採点結果
+  eval_{case}_{condition}.json # 各ケース×条件の個別採点結果
+  eval_summary.json            # 全体集計
 ```
 
-### Gold Standard
+## 処理フロー
 
 ```
-data/
-  orben_przybylski_2019/gold.json
-  twenge_2018/gold.json
-  cheng_hoekstra/gold.json
-  voight_hdl/gold.json
-  chen_huairiver/gold.json
+1. cases.py: データ読み込み (causaldata → pandas DataFrame)
+   ↓
+2. prompts.py: プロンプト生成 (共通入力 + 出力フォーマット + 条件別指示)
+   ↓
+3. run.py Phase 1: LLM に送信 → S0, S1, S2a, S2b を生成
+   ↓
+4. run.py: S2a から選択した手法をパース → tools.py の該当ツールを実行
+   ↓
+5. run.py Phase 2: ツール結果を LLM に返送 → S2-EVID, S3 を生成
+   ↓
+6. outputs/ に JSON 保存
+   ↓
+7. evaluate.py: チェックリスト項目ごとに gpt-4o でブラインド採点 (0/1/2)
 ```
 
-### 実行結果（最新版 v3）
+## 統計ツール (tools.py)
 
-```
-outputs/                         # 4条件×6ケース = 24件の実行ログ
-  run_4cond_{method}_{case}_v3.jsonl
+| ツール | 関数 | 主要出力 |
+|------|------|---------|
+| DiD | `did_estimator()` | TWFE推定 + Event Study + クラスターSE |
+| IV | `iv_estimator()` | 2SLS + 第一段階F + Sargan検定 |
+| RDD | `rdd_estimator()` | rdrobust + バイアス補正CI + 密度検定 |
+| Matching | `matching_estimator()` | PSM + 共変量バランス + common support |
+| IPW | `ipw_estimator()` | 安定化重み + トリミング + バランス確認 |
+| OLS | `ols_estimator()` | HC1ロバストSE |
 
-eval_outputs_v3/                 # 評価A: ブラインド突合結果
-  blind_eval_{case}_{method}.json  # 24件の個別結果
-  blind_eval_summary.json          # 集計
-  blind_eval_prompts.json          # gpt-4oに送った全プロンプト（再現性）
-  supervisor_analysis.json         # 評価C: Supervisor分析
-  evaluation_report.md             # レポート（旧版、更新必要）
+## 最新の実験結果
 
-eval_outputs_process_v3/         # 評価B: 推論ステップ評価結果
-  process_eval_{case}_{method}.json  # 24件の個別結果
-  process_eval_summary.json          # 集計 (主要結果)
-  process_eval_prompts.json          # gpt-4oに送った全プロンプト（再現性）
-```
+### チェックリスト採点（0/1/2スケール、満点はケースにより異なる）
 
-## 最新の実験結果（v3）
+| ケース | baseline | proposed | 差 |
+|------|---------|---------|---|
+| castle (DiD) | 23/32 (71.9%) | **28/32 (87.5%)** | +15.6 |
+| close_elections (RDD) | 17/26 (65.4%) | 17/26 (65.4%) | 0.0 |
+| nhefs (IPW) | 13/28 (46.4%) | **26/28 (92.9%)** | +46.4 |
+| nsw (Matching) | 22/28 (78.6%) | **23/28 (82.1%)** | +3.6 |
+| **合計** | **75/114 (65.8%)** | **94/114 (82.5%)** | **+16.7** |
 
-### 評価B（推論ステップ評価）— 主要結果
+### 手法選択
 
-| 条件 | 検出率 | S1 | S2 | S3 |
-|------|-------|---|---|---|
-| baseline | 16/21 (76.2%) | 4/5 | 8/10 | 4/6 |
-| scaffold_only | 17/21 (81.0%) | 4/5 | 9/10 | 4/6 |
-| rubric_only | 19/21 (90.5%) | 3/5 | 10/10 | 6/6 |
-| **proposed** | **20/21 (95.2%)** | **4/5** | **10/10** | **6/6** |
-
-### 評価A（最終判定一致率）
-
-| 条件 | combined |
-|------|---------|
-| baseline | 14/23 (60.9%) |
-| scaffold_only | 13/23 (56.5%) |
-| rubric_only | 14/23 (60.9%) |
-| proposed | 13/23 (56.5%) |
-
-### 評価C（Supervisor分析）
-
-- scaffold_only NGs: 0
-- proposed NGs: 9 (chen_huairiver: S1×1 S3×1, angrist_krueger: S1×3 S3×5)
-
-## 主要な知見
-
-1. **評価Bで proposed が baseline より +19.0 ポイント**（95.2% vs 76.2%）
-2. 期待されたパターン baseline < scaffold < rubric < proposed が完全成立
-3. rubricの構造化スキーマ（識別仮定の3カテゴリ、仮説の5カテゴリ必須化）が効果の本体
-4. 評価Aでは4条件で大差なし（揺らぎ範囲内）
-5. proposed の優位性は「推論過程の質（後続文献の懸念検出）」に集中
+| ケース | 教科書推奨 | baseline | proposed |
+|------|---------|----------|----------|
+| castle | DiD | DiD ✅ | DiD ✅ |
+| close_elections | RDD | RDD ✅ | RDD ✅ |
+| nhefs | IPW | OLS ❌ | IPW ✅ |
+| nsw | Matching | Matching ✅ | Matching ✅ |
 
 ## 実行方法
 
 ### 実験の実行
 ```bash
-python run.py --method proposed --case orben_przybylski_2019 --model gpt-5.4-mini --max_retry 7 --out outputs/test.jsonl
+# 単一ケース×単一条件
+python run.py --case castle --condition proposed --model gpt-5.4-mini --out outputs/
+
+# 全ケース×全条件（8件）
+python run.py --case all --condition all --model gpt-5.4-mini --out outputs/
 ```
 
 ### 評価の実行
 ```bash
-# 評価A
-python blind_eval.py --model gpt-4o --case orben_przybylski_2019 --method proposed --out eval_outputs_v3
-python blind_eval.py --summary --out eval_outputs_v3
+# 単一ケース×単一条件の採点
+python evaluate.py --case castle --condition baseline --model gpt-4o --out eval_outputs/
 
-# 評価B
-python process_eval.py --model gpt-4o --case orben_przybylski_2019 --method proposed --out eval_outputs_process_v3
-python process_eval.py --summary --out eval_outputs_process_v3
+# 全ケース×全条件の採点
+python evaluate.py --case all --condition all --model gpt-4o --out eval_outputs/
 
-# 評価C
-python supervisor_analysis.py --out eval_outputs_v3/supervisor_analysis.json
-
-# Rubric独立指標
-python metrics.py --outputs outputs/ --out eval_outputs_v3/metrics_summary.json
+# 既存結果のサマリ表示
+python evaluate.py --summary --out eval_outputs/
 ```
 
 ## 技術的な注意
 
-- 実験: gpt-5.4-mini, temperature=0.0, max_completion_tokens=8000
-- 評価: gpt-4o (実験と異なるモデル), temperature=0.0
-- ブラインド突合/検出のプロンプトには研究目的・条件名を含めない
-- strength チェックポイントはLLM不要（strength != "strong" で機械判定）
-- `find_run_file()` は v3 > v2 > 無印 の優先順位で実行ログを探索
-- Kelly (web_browsing_mood) はCASESリストから除外済み（formal evaluation 対象外）
+- 実験: gpt-5.4-mini, temperature=0, max_completion_tokens=8000
+- 評価: gpt-4o（実験と異なるモデル）, temperature=0
+- 評価プロンプトには研究目的・条件名を含めない（ブラインド）
+- strength チェック項目は LLM 不要（機械判定）
+- causaldata パッケージからデータ取得（castle, close_elections_lmb, nhefs, nsw_mixtape）
+- 手法選択は LLM の自律判断（proposed は知識を与えるが手法を指定しない）
