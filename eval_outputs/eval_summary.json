@@ -1,0 +1,509 @@
+{
+  "timestamp": "2026-04-12T08:40:21.237900+00:00",
+  "n_evaluations": 8,
+  "per_case_condition": [
+    {
+      "case_id": "castle",
+      "condition": "baseline",
+      "total_score": 23,
+      "max_score": 32,
+      "score_pct": 71.9,
+      "n_items": 16,
+      "score_0": 2,
+      "score_1": 5,
+      "score_2": 9
+    },
+    {
+      "case_id": "castle",
+      "condition": "proposed",
+      "total_score": 28,
+      "max_score": 32,
+      "score_pct": 87.5,
+      "n_items": 16,
+      "score_0": 1,
+      "score_1": 2,
+      "score_2": 13
+    },
+    {
+      "case_id": "close_elections",
+      "condition": "baseline",
+      "total_score": 17,
+      "max_score": 26,
+      "score_pct": 65.4,
+      "n_items": 13,
+      "score_0": 3,
+      "score_1": 3,
+      "score_2": 7
+    },
+    {
+      "case_id": "close_elections",
+      "condition": "proposed",
+      "total_score": 17,
+      "max_score": 26,
+      "score_pct": 65.4,
+      "n_items": 13,
+      "score_0": 3,
+      "score_1": 3,
+      "score_2": 7
+    },
+    {
+      "case_id": "nhefs",
+      "condition": "baseline",
+      "total_score": 13,
+      "max_score": 28,
+      "score_pct": 46.4,
+      "n_items": 14,
+      "score_0": 5,
+      "score_1": 5,
+      "score_2": 4
+    },
+    {
+      "case_id": "nhefs",
+      "condition": "proposed",
+      "total_score": 26,
+      "max_score": 28,
+      "score_pct": 92.9,
+      "n_items": 14,
+      "score_0": 0,
+      "score_1": 2,
+      "score_2": 12
+    },
+    {
+      "case_id": "nsw",
+      "condition": "baseline",
+      "total_score": 22,
+      "max_score": 28,
+      "score_pct": 78.6,
+      "n_items": 14,
+      "score_0": 1,
+      "score_1": 4,
+      "score_2": 9
+    },
+    {
+      "case_id": "nsw",
+      "condition": "proposed",
+      "total_score": 23,
+      "max_score": 28,
+      "score_pct": 82.1,
+      "n_items": 14,
+      "score_0": 1,
+      "score_1": 3,
+      "score_2": 10
+    }
+  ],
+  "per_condition": {
+    "baseline": {
+      "total": 75,
+      "max": 114,
+      "n_cases": 4,
+      "score_pct": 65.8
+    },
+    "proposed": {
+      "total": 94,
+      "max": 114,
+      "n_cases": 4,
+      "score_pct": 82.5
+    }
+  },
+  "item_comparison": [
+    {
+      "case_id": "castle",
+      "item_id": "a",
+      "description": "手法選択がDiD（TWFE）か",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "castle",
+      "item_id": "b",
+      "description": "識別仮定: 平行トレンド仮定を述べているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "castle",
+      "item_id": "c",
+      "description": "平行トレンドの重要性を認識しているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "castle",
+      "item_id": "d",
+      "description": "平行トレンドが崩れた場合の帰結を述べているか",
+      "baseline": 1,
+      "proposed": 1
+    },
+    {
+      "case_id": "castle",
+      "item_id": "e",
+      "description": "平行トレンドの検証不可能性を認識しているか",
+      "baseline": 1,
+      "proposed": 2
+    },
+    {
+      "case_id": "castle",
+      "item_id": "f",
+      "description": "OLSが常に対照群の傾きを反事実として使うことを認識しているか",
+      "baseline": 1,
+      "proposed": 1
+    },
+    {
+      "case_id": "castle",
+      "item_id": "g",
+      "description": "SUTVA/spilloverへの言及があるか",
+      "baseline": 0,
+      "proposed": 2
+    },
+    {
+      "case_id": "castle",
+      "item_id": "h",
+      "description": "同時政策変更の懸念への言及があるか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "castle",
+      "item_id": "i",
+      "description": "クラスター標準誤差の必要性を述べているか",
+      "baseline": 0,
+      "proposed": 2
+    },
+    {
+      "case_id": "castle",
+      "item_id": "j",
+      "description": "Staggered adoptionでのTWFE問題への言及があるか",
+      "baseline": 1,
+      "proposed": 0
+    },
+    {
+      "case_id": "castle",
+      "item_id": "j2",
+      "description": "モデリング選択: 共変量の選択が結果に影響することを認識しているか",
+      "baseline": 1,
+      "proposed": 2
+    },
+    {
+      "case_id": "castle",
+      "item_id": "j3",
+      "description": "モデリング選択: 回帰の関数形やコントロール変数の正当化があるか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "castle",
+      "item_id": "k",
+      "description": "診断検定: Event study / lead検定への言及があるか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "castle",
+      "item_id": "l",
+      "description": "Event study検定の限界を認識しているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "castle",
+      "item_id": "m",
+      "description": "strengthが≠ strongか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "castle",
+      "item_id": "n",
+      "description": "strengthの根拠が識別仮定の状態と連動しているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "close_elections",
+      "item_id": "a",
+      "description": "手法選択がRDD（Sharp）か",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "close_elections",
+      "item_id": "b",
+      "description": "識別仮定: 連続性仮定を述べているか",
+      "baseline": 1,
+      "proposed": 1
+    },
+    {
+      "case_id": "close_elections",
+      "item_id": "c",
+      "description": "連続性仮定がOVBを排除することを認識しているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "close_elections",
+      "item_id": "d",
+      "description": "識別仮定: 操作不可能性を述べているか",
+      "baseline": 0,
+      "proposed": 2
+    },
+    {
+      "case_id": "close_elections",
+      "item_id": "e",
+      "description": "連続性仮定が崩れた場合の帰結を述べているか",
+      "baseline": 1,
+      "proposed": 1
+    },
+    {
+      "case_id": "close_elections",
+      "item_id": "f",
+      "description": "操作が存在する場合の帰結を述べているか",
+      "baseline": 1,
+      "proposed": 1
+    },
+    {
+      "case_id": "close_elections",
+      "item_id": "g",
+      "description": "LATEの局所性の限界を述べているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "close_elections",
+      "item_id": "h",
+      "description": "バンド幅選択への感度を述べているか",
+      "baseline": 2,
+      "proposed": 0
+    },
+    {
+      "case_id": "close_elections",
+      "item_id": "i",
+      "description": "関数形選択への懸念を述べているか",
+      "baseline": 0,
+      "proposed": 0
+    },
+    {
+      "case_id": "close_elections",
+      "item_id": "j",
+      "description": "診断検定: McCrary密度検定への言及があるか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "close_elections",
+      "item_id": "k",
+      "description": "診断検定: 共変量バランス検定への言及があるか",
+      "baseline": 0,
+      "proposed": 0
+    },
+    {
+      "case_id": "close_elections",
+      "item_id": "l",
+      "description": "strengthがmoderate〜strongの範囲か",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "close_elections",
+      "item_id": "m",
+      "description": "strengthの根拠が識別仮定の状態と連動しているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "a",
+      "description": "手法選択がIPW（またはg推定/傾向スコア法）か",
+      "baseline": 0,
+      "proposed": 2
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "b",
+      "description": "識別仮定: 条件付き交換可能性を述べているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "c",
+      "description": "交換可能性の検証不可能性を認識しているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "d",
+      "description": "識別仮定: Positivityを述べているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "e",
+      "description": "識別仮定: Consistencyを述べているか",
+      "baseline": 0,
+      "proposed": 2
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "f",
+      "description": "交換可能性が崩れた場合の帰結を述べているか",
+      "baseline": 1,
+      "proposed": 1
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "g",
+      "description": "Positivityが崩れた場合の帰結を述べているか",
+      "baseline": 1,
+      "proposed": 2
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "h",
+      "description": "極端な重み / stabilized weightsへの言及があるか",
+      "baseline": 0,
+      "proposed": 2
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "i",
+      "description": "傾向スコアモデルの指定への懸念があるか",
+      "baseline": 1,
+      "proposed": 1
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "j",
+      "description": "未観測交絡の可能性 / 感度分析への言及があるか",
+      "baseline": 1,
+      "proposed": 2
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "k",
+      "description": "診断検定: 共変量バランス確認への言及があるか",
+      "baseline": 0,
+      "proposed": 2
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "l",
+      "description": "診断検定: 重みの分布確認への言及があるか",
+      "baseline": 0,
+      "proposed": 2
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "m",
+      "description": "strengthが≠ strongか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "nhefs",
+      "item_id": "n",
+      "description": "strengthの根拠が識別仮定の状態と連動しているか",
+      "baseline": 1,
+      "proposed": 2
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "a",
+      "description": "手法選択がマッチング（PSM/subclassification等）か",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "b",
+      "description": "識別仮定: CIA（条件付き独立性仮定）を述べているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "c",
+      "description": "CIAとbackdoor criterionの関係を認識しているか",
+      "baseline": 1,
+      "proposed": 1
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "d",
+      "description": "識別仮定: Common Support / Overlapを述べているか",
+      "baseline": 1,
+      "proposed": 2
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "e",
+      "description": "CIAが崩れた場合の帰結を述べているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "f",
+      "description": "Common Supportが崩れた場合の帰結を述べているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "g",
+      "description": "バランスの概念を正しく理解しているか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "h",
+      "description": "LaLonde (1986)の教訓への言及があるか",
+      "baseline": 0,
+      "proposed": 0
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "i",
+      "description": "PSMの限界への言及があるか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "j",
+      "description": "診断検定: 共変量バランス確認への言及があるか",
+      "baseline": 2,
+      "proposed": 2
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "k",
+      "description": "診断検定: Common Support確認への言及があるか",
+      "baseline": 2,
+      "proposed": 1
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "l",
+      "description": "RCTデータとの比較可能性への言及があるか",
+      "baseline": 1,
+      "proposed": 1
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "m",
+      "description": "strengthが分析アプローチに依存することを認識しているか",
+      "baseline": 1,
+      "proposed": 2
+    },
+    {
+      "case_id": "nsw",
+      "item_id": "n",
+      "description": "strengthの根拠が識別仮定の状態と連動しているか",
+      "baseline": 2,
+      "proposed": 2
+    }
+  ]
+}
