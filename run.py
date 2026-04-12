@@ -1,671 +1,362 @@
-#!/usr/bin/env python3
 """
-3-Layer Oversight Protocol Runner for Observational Causal Inference.
+Main runner for causal inference analysis.
 
-Layer 1: Process-level protocol  (S0 → S1 → S2 → S2-EVID → S3)
-Layer 2: Operationalized rubric  (Explicit / Partial / Absent)
-Layer 3: Audit implementation    (Mechanical Checks + Supervisor)
+Flow:
+1. Load case data
+2. Format prompt (common input + condition instructions)
+3. Send to LLM -> get S0-S2b output
+4. Parse S2a to find chosen method
+5. Call appropriate tool from tools.py
+6. Format S2-EVID with tool results
+7. Send continuation prompt -> get S3 output
+8. Save full output as JSON
+
+CLI:
+    python run.py --case castle --condition baseline --model gpt-5.4-mini --out outputs/
+    python run.py --case all --condition all  # run all 4x2=8
 """
-
-from __future__ import annotations
 
 import argparse
 import json
-import uuid
-from datetime import datetime
+import os
+import re
+import sys
+import time
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
-from llm_client import LLMClient
-from prompt_store import PromptStore
-from rubric import evaluate_full, format_rubric_report
-from schemas import (
-    normalize_designer_payload,
-    normalize_supervisor,
-    parse_json_object,
-    validate_designer,
-    validate_evidence,
-    validate_supervisor,
-)
+from dotenv import load_dotenv
+from openai import OpenAI
+
+import cases
+import prompts
+import tools
+
+load_dotenv()
 
 
-def now_ts() -> str:
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
+def create_client() -> OpenAI:
+    """Create OpenAI client."""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        print("Error: OPENAI_API_KEY not found in environment or .env file.")
+        sys.exit(1)
+    return OpenAI(api_key=api_key)
 
 
-def summarize(value: Any, max_len: int = 220) -> str:
-    text = json.dumps(value, ensure_ascii=False) if not isinstance(value, str) else value
-    text = " ".join(text.split())
-    return text[:max_len]
-
-
-def append_jsonl(path: Path, row: Dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(row, ensure_ascii=False) + "\n")
-
-
-def log_step(
-    out_path: Path,
-    run_id: str,
-    case_id: str,
-    stage: str,
-    attempt: int,
-    role: str,
-    input_summary: Any,
-    raw_output: str,
-    parsed: Optional[Dict[str, Any]],
-    status: str,
-) -> None:
-    append_jsonl(
-        out_path,
-        {
-            "run_id": run_id,
-            "case_id": case_id,
-            "stage": stage,
-            "attempt": attempt,
-            "role": role,
-            "input_summary": summarize(input_summary),
-            "raw_output": raw_output,
-            "parsed": parsed,
-            "status": status,
-        },
+def call_llm(
+    client: OpenAI,
+    messages: list[dict],
+    model: str = "gpt-5.4-mini",
+    temperature: float = 0.0,
+    max_completion_tokens: int = 8000,
+) -> str:
+    """Call the LLM and return the response text."""
+    response = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        temperature=temperature,
+        max_completion_tokens=max_completion_tokens,
     )
+    return response.choices[0].message.content
 
 
-def _extend_unique(dst: List[str], src: List[str]) -> List[str]:
-    for item in src:
-        if item not in dst:
-            dst.append(item)
-    return dst
+def parse_method_from_s2a(text: str) -> str | None:
+    """
+    Parse the chosen method from S2a section of LLM output.
+    Looks for '選択した手法:' line.
+    """
+    # Try to find '選択した手法:' pattern
+    patterns = [
+        r"選択した手法[:：]\s*(.+)",
+        r"選択した手法\s*[:：]\s*(.+)",
+        r"手法選択[:：]\s*(.+)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            method_text = match.group(1).strip()
+            return method_text
+    return None
 
 
-# ---------------------------------------------------------------------------
-# Layer 3: Mechanical Checks (deterministic consistency checks)
-# ---------------------------------------------------------------------------
+def parse_tool_params_from_output(text: str, case_id: str, method_key: str) -> dict:
+    """
+    Try to extract tool parameters from LLM output.
+    Falls back to default parameters for the case.
+    """
+    case_data = cases.CASES[case_id]
+    defaults = case_data["default_params"]
 
-def run_mechanical_checks(
-    *, stage: str, parsed_designer: Dict[str, Any], context: Dict[str, Any],
-    extended: bool = False,
-) -> Dict[str, List[str]]:
-    """Deterministic consistency checks independent from LLM supervisor output."""
-    fatal: List[str] = []
-    minor: List[str] = []
-    fix: List[str] = []
+    # For now, use defaults. A more sophisticated parser could extract
+    # variable names from the LLM output, but defaults are reliable.
+    return defaults
 
-    s1 = context.get("S1", {}) if isinstance(context.get("S1"), dict) else {}
-    s1_hyps = s1.get("hypotheses", []) if isinstance(s1.get("hypotheses"), list) else []
-    s1_ids = [h.get("id") for h in s1_hyps if isinstance(h, dict) and isinstance(h.get("id"), str)]
 
-    # Build relation lookup from S1
-    s1_relations = s1.get("hypothesis_relations", [])
-    relation_map: Dict[tuple, str] = {}
-    if isinstance(s1_relations, list):
-        for rel in s1_relations:
-            if isinstance(rel, dict):
-                pair = rel.get("pair", [])
-                rtype = rel.get("relation", "exclusive")
-                if isinstance(pair, list) and len(pair) == 2:
-                    relation_map[(pair[0], pair[1])] = rtype
-                    relation_map[(pair[1], pair[0])] = rtype
+def run_tool(data, method_key: str, params: dict) -> dict:
+    """Run the appropriate analysis tool."""
+    tool_func = tools.TOOLS.get(method_key)
+    if tool_func is None:
+        return {
+            "method": method_key,
+            "summary": f"Error: Unknown tool '{method_key}'",
+            "estimates": {},
+            "diagnostics": {},
+        }
 
-    if stage == "S2":
-        plan = parsed_designer.get("experiment_plan", {})
-        rules = plan.get("hypothesis_rules", []) if isinstance(plan, dict) else []
-        if not isinstance(rules, list) or not rules:
-            fatal.append("S2: hypothesis_rules が空、または形式不正。")
-            fix.append("S2で各仮説に対し accept_if/reject_if/hold_if を必ず定義してください。")
-            return {"fatal_issues": fatal, "minor_issues": minor, "fix_instructions": fix}
-
-        rule_ids = [r["id"] for r in rules if isinstance(r, dict) and isinstance(r.get("id"), str)]
-        missing = [hid for hid in s1_ids if hid not in rule_ids]
-        extra = [rid for rid in rule_ids if rid not in s1_ids]
-        if missing:
-            fatal.append(f"S2: hypothesis_rules に不足IDがあります: {', '.join(missing)}")
-            fix.append("S1で定義した全仮説IDを hypothesis_rules に含めてください。")
-        if extra:
-            minor.append(f"S2: S1にない仮説IDが hypothesis_rules に含まれます: {', '.join(extra)}")
-            fix.append("hypothesis_rules のIDを S1 の仮説IDと一致させてください。")
-
-        # Check identification assumptions exist (can be in plan or at top level)
-        assumptions = plan.get("identification_assumptions", []) if isinstance(plan, dict) else []
-        top_assumptions = parsed_designer.get("identification_assumptions", [])
-        all_assumptions = assumptions if (isinstance(assumptions, list) and assumptions) else top_assumptions
-        if not isinstance(all_assumptions, list) or not all_assumptions:
-            fatal.append("S2: identification_assumptions が空です。")
-            fix.append("識別仮定を少なくとも1つ以上定義してください。")
-
-        return {"fatal_issues": fatal, "minor_issues": minor, "fix_instructions": fix}
-
-    if stage != "S3":
-        return {"fatal_issues": fatal, "minor_issues": minor, "fix_instructions": fix}
-
-    # S3 checks
-    conclusion = parsed_designer.get("conclusion", {})
-    judgments = conclusion.get("hypothesis_judgments", [])
-    if not isinstance(judgments, list) or not judgments:
-        fatal.append("S3: hypothesis_judgments が空、または形式不正。")
-        fix.append("仮説ごとに判定表を作成してください。")
-        return {"fatal_issues": fatal, "minor_issues": minor, "fix_instructions": fix}
-
-    s2_evid = context.get("s2_evidence", {})
-    findings = s2_evid.get("findings", []) if isinstance(s2_evid, dict) else []
-    valid_evidence_ids = {
-        f.get("id") for f in findings if isinstance(f, dict) and isinstance(f.get("id"), str)
-    }
-    not_observed = s2_evid.get("not_observed", []) if isinstance(s2_evid, dict) else []
-
-    seen_ids = set()
-    by_id: Dict[str, Dict[str, Any]] = {}
-    for item in judgments:
-        hid = item.get("id")
-        if not isinstance(hid, str):
-            continue
-        if hid in seen_ids:
-            fatal.append(f"S3: 同一仮説IDが重複しています: {hid}")
-        seen_ids.add(hid)
-        by_id[hid] = item
-
-    missing_h = [hid for hid in s1_ids if hid not in by_id]
-    if missing_h:
-        fatal.append(f"S3: 判定表に不足している仮説IDがあります: {', '.join(missing_h)}")
-        fix.append("S1で定義した全仮説について hypothesis_judgments を作成してください。")
-
-    for hid, item in by_id.items():
-        decision = item.get("decision")
-        evidence_ids = item.get("evidence_ids", [])
-        falsify_triggered = item.get("falsify_triggered")
-        accept_met = item.get("accept_condition_met")
-        reject_met = item.get("reject_condition_met")
-        hold_met = item.get("hold_condition_met")
-
-        if decision in ("survive", "reject") and isinstance(evidence_ids, list) and not evidence_ids:
-            fatal.append(f"S3: {hid} は {decision} 判定なのに evidence_ids が空です。")
-            fix.append("survive/reject には必ず根拠となる evidence_ids を付与してください。")
-
-        if isinstance(evidence_ids, list):
-            unknown_eids = [eid for eid in evidence_ids if eid not in valid_evidence_ids]
-            if unknown_eids:
-                fatal.append(f"S3: {hid} に未知の evidence_id があります: {', '.join(unknown_eids)}")
-                fix.append("evidence_ids は S2-EVID の findings.id のみ使用してください。")
-
-        if all(isinstance(v, bool) for v in [accept_met, reject_met, hold_met]):
-            true_count = sum([accept_met, reject_met, hold_met])
-            if true_count != 1:
-                fatal.append(f"S3: {hid} の条件一致フラグはちょうど1つだけ true にしてください。")
-                fix.append(
-                    "accept_condition_met/reject_condition_met/hold_condition_met を排他的に設定してください。"
-                    "【重要】decisionの値は変更せず、フラグのみを修正してください。"
-                    "surviveならaccept_condition_met=true、rejectならreject_condition_met=true、"
-                    "holdならhold_condition_met=trueとし、他の2つをfalseにしてください。"
-                )
-            if decision == "survive" and (not accept_met or reject_met):
-                fatal.append(
-                    f"S3: {hid} は survive なのに条件一致フラグが不整合です。"
-                    f"【修正方法】decision=surviveを維持したまま、accept_condition_met=true, "
-                    f"reject_condition_met=false, hold_condition_met=false に設定してください。"
-                    f"decisionを変更してはいけません。"
-                )
-            if decision == "reject" and not reject_met:
-                fatal.append(
-                    f"S3: {hid} は reject なのに reject_condition_met が false です。"
-                    f"decision=rejectを維持したまま、reject_condition_met=true に設定してください。"
-                )
-            if decision == "hold" and not hold_met:
-                fatal.append(
-                    f"S3: {hid} は hold なのに hold_condition_met が false です。"
-                    f"decision=holdを維持したまま、hold_condition_met=true に設定してください。"
-                )
-        else:
-            fatal.append(f"S3: {hid} の条件一致フラグが不足、または型不正です。")
-            fix.append("各仮説に3つの条件一致フラグ（bool）を必ず出力してください。")
-
-        if falsify_triggered is True and decision != "reject":
-            fatal.append(f"S3: {hid} は反証発火なのに reject されていません。")
-            fix.append("falsify_triggered=true の仮説は reject にしてください。")
-
-    declared_survive = set(conclusion.get("which_hypotheses_survive", []))
-    declared_reject = set(conclusion.get("which_rejected", []))
-    computed_survive = {hid for hid, item in by_id.items() if item.get("decision") == "survive"}
-    computed_reject = {hid for hid, item in by_id.items() if item.get("decision") == "reject"}
-    if declared_survive != computed_survive:
-        fatal.append("S3: which_hypotheses_survive が判定表と一致していません。")
-        fix.append("which_hypotheses_survive を hypothesis_judgments の survive 判定と一致させてください。")
-    if declared_reject != computed_reject:
-        fatal.append("S3: which_rejected が判定表と一致していません。")
-        fix.append("which_rejected を hypothesis_judgments の reject 判定と一致させてください。")
-
-    strength = conclusion.get("strength")
-    any_hold = any(item.get("decision") == "hold" for item in by_id.values())
-    all_hold = by_id and all(item.get("decision") == "hold" for item in by_id.values())
-    if strength == "strong" and any_hold:
-        fatal.append("S3: hold 判定があるのに strength=strong は不可です。")
-        fix.append("hold が1つでもある場合は strength を weak か hold に下げてください。")
-    if strength == "strong" and isinstance(not_observed, list) and len(not_observed) > 0:
-        fatal.append("S3: 主要未観測があるため strength=strong は不可です。")
-        fix.append("not_observed が残る場合は strength を weak/hold にしてください。")
-    if all_hold and strength != "hold":
-        fatal.append("S3: 全仮説holdなら strength は hold にしてください。")
-
-    # Check remaining_alternatives exists
-    remaining = conclusion.get("remaining_alternatives", [])
-    residual = conclusion.get("residual_alternatives", [])
-    actual_remaining = remaining or residual
-    if not isinstance(actual_remaining, list) or not actual_remaining:
-        minor.append("S3: remaining_alternatives/residual_alternatives が空です。")
-        fix.append("残存する代替説明を少なくとも1つ記述してください。")
-
-    # Extended checks (condition 4: proposed)
-    if extended:
-        # Hypothesis relations vs judgment consistency
-        s1_rels = s1.get("hypothesis_relations", [])
-        if isinstance(s1_rels, list):
-            for rel in s1_rels:
-                if not isinstance(rel, dict):
-                    continue
-                pair = rel.get("pair", [])
-                relation = rel.get("relation")
-                if not isinstance(pair, list) or len(pair) != 2:
-                    continue
-                h_a, h_b = pair
-                dec_a = by_id.get(h_a, {}).get("decision")
-                dec_b = by_id.get(h_b, {}).get("decision")
-                if relation == "exclusive" and dec_a == "survive" and dec_b == "survive":
-                    fatal.append(f"S3: {h_a}と{h_b}はexclusiveだが両方surviveしています。")
-                    fix.append(f"exclusiveな仮説ペア({h_a},{h_b})では両方surviveは不可です。")
-
-        # Identification assumption concerns vs strength
-        iac = conclusion.get("identification_assumption_concerns", [])
-        if isinstance(iac, list):
-            has_violated = any(
-                isinstance(item, dict) and item.get("violated_or_uncertain") in ("violated", "uncertain")
-                for item in iac
+    try:
+        if method_key == "did":
+            return tool_func(
+                data,
+                treatment=params["treatment"],
+                outcome=params["outcome"],
+                group=params["group"],
+                time=params["time"],
+                covariates=params.get("covariates"),
             )
-            if strength == "strong" and has_violated:
-                fatal.append("S3: 識別仮定にviolatedまたはuncertainがあるのにstrength=strongは不可です。")
-                fix.append("識別仮定に懸念がある場合はstrengthをweakまたはholdにしてください。")
-
-    return {"fatal_issues": fatal, "minor_issues": minor, "fix_instructions": fix}
-
-
-# ---------------------------------------------------------------------------
-# Designer + Supervisor loop (Layer 3)
-# ---------------------------------------------------------------------------
-
-def run_designer_with_supervisor(
-    *,
-    run_id: str,
-    case_id: str,
-    stage: str,
-    prompt_profile: str,
-    max_retry: int,
-    client: LLMClient,
-    prompts: PromptStore,
-    out_path: Path,
-    context: Dict[str, Any],
-    extended: bool = False,
-) -> bool:
-    """Run one stage with supervisor checks and retry loop."""
-    check_stage = f"{stage}-CHK"
-    feedback: List[str] = []
-    previous_designer_output: Optional[Dict[str, Any]] = None
-    previous_supervisor_review: Optional[Dict[str, Any]] = None
-
-    for attempt in range(max_retry + 1):
-        designer_input = {
-            "case_id": case_id,
-            "stage": stage,
-            "attempt": attempt,
-            "feedback": feedback,
-            "previous_designer_output": previous_designer_output,
-            "previous_supervisor_review": previous_supervisor_review,
-            "context": context,
+        elif method_key == "iv":
+            return tool_func(
+                data,
+                endogenous=params["endogenous"],
+                outcome=params["outcome"],
+                instruments=params["instruments"],
+                covariates=params.get("covariates"),
+            )
+        elif method_key == "rdd":
+            return tool_func(
+                data,
+                outcome=params["outcome"],
+                running_var=params["running_var"],
+                cutoff=params["cutoff"],
+                bandwidth=params.get("bandwidth"),
+            )
+        elif method_key == "matching":
+            return tool_func(
+                data,
+                treatment=params["treatment"],
+                outcome=params["outcome"],
+                covariates=params["covariates"],
+            )
+        elif method_key == "ipw":
+            return tool_func(
+                data,
+                treatment=params["treatment"],
+                outcome=params["outcome"],
+                covariates=params["covariates"],
+            )
+        elif method_key == "ols":
+            return tool_func(
+                data,
+                outcome=params["outcome"],
+                regressors=params["regressors"],
+            )
+        else:
+            return {
+                "method": method_key,
+                "summary": f"Error: No handler for tool '{method_key}'",
+                "estimates": {},
+                "diagnostics": {},
+            }
+    except Exception as e:
+        return {
+            "method": method_key,
+            "summary": f"Error running {method_key}: {e}",
+            "estimates": {},
+            "diagnostics": {},
         }
-        raw_designer = client.generate(
-            role="designer",
-            stage=stage,
-            prompt_text=prompts.get("designer", stage, profile=prompt_profile),
-            context=designer_input,
-            attempt=attempt,
-        )
-        parsed_designer, parse_err = parse_json_object(raw_designer)
-        if parse_err:
-            log_step(out_path, run_id, case_id, stage, attempt, "designer",
-                     designer_input, raw_designer, None, "parse_error")
-            return False
-
-        parsed_designer = normalize_designer_payload(stage, parsed_designer)
-        val_err = validate_designer(stage, parsed_designer, extended=extended)
-        if val_err:
-            log_step(out_path, run_id, case_id, stage, attempt, "designer",
-                     designer_input, raw_designer, parsed_designer, f"schema_error:{val_err}")
-            return False
-
-        log_step(out_path, run_id, case_id, stage, attempt, "designer",
-                 designer_input, raw_designer, parsed_designer, "success")
-        previous_designer_output = parsed_designer
-
-        # Supervisor review
-        supervisor_input = {
-            "case_id": case_id,
-            "stage": check_stage,
-            "attempt": attempt,
-            "designer_output": parsed_designer,
-            "context": context,
-        }
-        raw_supervisor = client.generate(
-            role="supervisor",
-            stage=check_stage,
-            prompt_text=prompts.get("supervisor", check_stage, profile=prompt_profile),
-            context=supervisor_input,
-            attempt=attempt,
-        )
-        parsed_supervisor, parse_err = parse_json_object(raw_supervisor)
-        if parse_err:
-            log_step(out_path, run_id, case_id, check_stage, attempt, "supervisor",
-                     supervisor_input, raw_supervisor, None, "parse_error")
-            return False
-
-        parsed_supervisor = normalize_supervisor(parsed_supervisor)
-        val_err = validate_supervisor(parsed_supervisor)
-        if val_err:
-            log_step(out_path, run_id, case_id, check_stage, attempt, "supervisor",
-                     supervisor_input, raw_supervisor, parsed_supervisor, f"schema_error:{val_err}")
-            return False
-
-        # Mechanical checks (Layer 3)
-        mech = run_mechanical_checks(stage=stage, parsed_designer=parsed_designer, context=context, extended=extended)
-        fatal_mech = mech.get("fatal_issues", [])
-        minor_mech = mech.get("minor_issues", [])
-        fix_mech = mech.get("fix_instructions", [])
-        if fatal_mech or minor_mech:
-            parsed_supervisor["fatal_issues"] = _extend_unique(
-                list(parsed_supervisor.get("fatal_issues", [])), list(fatal_mech))
-            parsed_supervisor["minor_issues"] = _extend_unique(
-                list(parsed_supervisor.get("minor_issues", [])), list(minor_mech))
-            parsed_supervisor["issues"] = _extend_unique(
-                list(parsed_supervisor.get("issues", [])), list(fatal_mech) + list(minor_mech))
-            parsed_supervisor["fix_instructions"] = _extend_unique(
-                list(parsed_supervisor.get("fix_instructions", [])), list(fix_mech))
-            if fatal_mech:
-                parsed_supervisor["verdict"] = "NG"
-
-        verdict = parsed_supervisor.get("verdict")
-        fatal_issues = parsed_supervisor.get("fatal_issues", []) or []
-        minor_issues = parsed_supervisor.get("minor_issues", []) or []
-
-        # Safety valve: NG with only minor issues → pass
-        if verdict == "NG" and not fatal_issues and minor_issues:
-            parsed_supervisor["verdict"] = "OK"
-            verdict = "OK"
-            parsed_supervisor["pass_requirements"] = list(
-                parsed_supervisor.get("pass_requirements", [])
-            ) + ["軽微指摘のみのため通過（次ステージで改善継続）"]
-
-        if verdict == "OK":
-            log_step(out_path, run_id, case_id, check_stage, attempt, "supervisor",
-                     supervisor_input, raw_supervisor, parsed_supervisor, "success")
-            context[stage] = parsed_designer
-            context[check_stage] = parsed_supervisor
-            return True
-
-        if attempt >= max_retry:
-            log_step(out_path, run_id, case_id, check_stage, attempt, "supervisor",
-                     supervisor_input, raw_supervisor, parsed_supervisor, "stop_by_max_retry")
-            return False
-
-        log_step(out_path, run_id, case_id, check_stage, attempt, "supervisor",
-                 supervisor_input, raw_supervisor, parsed_supervisor, "retry_required")
-        previous_supervisor_review = parsed_supervisor
-        feedback = parsed_supervisor.get("fix_instructions", [])
-
-    return False
 
 
-def run_designer_only(
-    *,
-    run_id: str,
+def run_single(
     case_id: str,
-    stage: str,
-    prompt_profile: str,
-    max_retry: int,
-    client: LLMClient,
-    prompts: PromptStore,
-    out_path: Path,
-    context: Dict[str, Any],
-    extended: bool = False,
-) -> bool:
-    """Baseline mode: no supervisor loop."""
-    feedback: List[str] = []
-    previous_designer_output: Optional[Dict[str, Any]] = None
+    condition: str,
+    model: str = "gpt-5.4-mini",
+    out_dir: str = "outputs",
+) -> dict:
+    """
+    Run a single case x condition experiment.
+    Returns the full output dict.
+    """
+    print(f"\n{'='*60}")
+    print(f"Running: case={case_id}, condition={condition}, model={model}")
+    print(f"{'='*60}")
 
-    for attempt in range(max_retry + 1):
-        designer_input = {
+    # 1. Load case data
+    print("Loading case data...")
+    case_data = cases.load(case_id)
+    data = case_data["data"]
+
+    # 2. Format prompt
+    print("Formatting prompt...")
+    initial_prompt = prompts.format_prompt(case_data, condition)
+
+    # 3. Send to LLM (S0-S2b)
+    print("Calling LLM for S0-S2b...")
+    client = create_client()
+    messages_phase1 = [{"role": "user", "content": initial_prompt}]
+
+    t0 = time.time()
+    s0_s2b_output = call_llm(client, messages_phase1, model=model)
+    t1 = time.time()
+    print(f"  Phase 1 completed in {t1 - t0:.1f}s")
+
+    # 4. Parse chosen method
+    method_text = parse_method_from_s2a(s0_s2b_output)
+    print(f"  Parsed method: {method_text}")
+
+    method_key = None
+    if method_text:
+        method_key = tools.resolve_method(method_text)
+
+    if method_key is None:
+        print(f"  Could not resolve method. Using default: {case_data['default_tool']}")
+        method_key = case_data["default_tool"]
+
+    print(f"  Resolved tool: {method_key}")
+
+    # 5. Get tool parameters
+    params = parse_tool_params_from_output(s0_s2b_output, case_id, method_key)
+    print(f"  Tool params: {params}")
+
+    # 6. Run tool
+    print(f"Running {method_key} tool...")
+    tool_result = run_tool(data, method_key, params)
+    print(f"  Tool completed. Method: {tool_result['method']}")
+
+    # 7. Send continuation prompt with tool results
+    print("Calling LLM for S3...")
+    continuation = prompts.format_continuation(tool_result["summary"])
+    messages_phase2 = [
+        {"role": "user", "content": initial_prompt},
+        {"role": "assistant", "content": s0_s2b_output},
+        {"role": "user", "content": continuation},
+    ]
+
+    t2 = time.time()
+    s3_output = call_llm(client, messages_phase2, model=model)
+    t3 = time.time()
+    print(f"  Phase 2 completed in {t3 - t2:.1f}s")
+
+    # 8. Assemble full output
+    output = {
+        "metadata": {
             "case_id": case_id,
-            "stage": stage,
-            "attempt": attempt,
-            "feedback": feedback,
-            "previous_designer_output": previous_designer_output,
-            "context": context,
-        }
-        raw_designer = client.generate(
-            role="designer",
-            stage=stage,
-            prompt_text=prompts.get("designer", stage, profile=prompt_profile),
-            context=designer_input,
-            attempt=attempt,
-        )
-        parsed_designer, parse_err = parse_json_object(raw_designer)
-        if parse_err:
-            if attempt >= max_retry:
-                log_step(out_path, run_id, case_id, stage, attempt, "designer",
-                         designer_input, raw_designer, None, "stop_by_max_retry")
-                return False
-            log_step(out_path, run_id, case_id, stage, attempt, "designer",
-                     designer_input, raw_designer, None, "parse_error")
-            feedback = ["JSONとして解釈できません。必ず指定スキーマのJSONのみを返してください。"]
-            continue
+            "condition": condition,
+            "model": model,
+            "label": case_data["label"],
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "phase1_time_s": round(t1 - t0, 2),
+            "phase2_time_s": round(t3 - t2, 2),
+        },
+        "prompt": {
+            "initial_prompt": initial_prompt,
+            "continuation_prompt": continuation,
+        },
+        "llm_output": {
+            "s0_s2b": s0_s2b_output,
+            "s3": s3_output,
+        },
+        "tool": {
+            "method_text": method_text,
+            "method_key": method_key,
+            "params": {k: v for k, v in params.items() if k != "data"},
+            "result": {
+                "method": tool_result["method"],
+                "summary": tool_result["summary"],
+                "estimates": tool_result["estimates"],
+                "diagnostics": _make_serializable(tool_result["diagnostics"]),
+            },
+        },
+    }
 
-        parsed_designer = normalize_designer_payload(stage, parsed_designer)
-        val_err = validate_designer(stage, parsed_designer, extended=extended)
-        if val_err:
-            if attempt >= max_retry:
-                log_step(out_path, run_id, case_id, stage, attempt, "designer",
-                         designer_input, raw_designer, parsed_designer, "stop_by_max_retry")
-                return False
-            log_step(out_path, run_id, case_id, stage, attempt, "designer",
-                     designer_input, raw_designer, parsed_designer, f"schema_error:{val_err}")
-            feedback = [f"スキーマ違反({val_err})です。指定された必須キーと型を満たすJSONを返してください。"]
-            previous_designer_output = parsed_designer
-            continue
+    # Save output
+    out_path = Path(out_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+    filename = f"run_{case_id}_{condition}.json"
+    filepath = out_path / filename
 
-        log_step(out_path, run_id, case_id, stage, attempt, "designer",
-                 designer_input, raw_designer, parsed_designer, "success")
-        context[stage] = parsed_designer
-        return True
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(output, f, ensure_ascii=False, indent=2)
 
-    return False
+    print(f"Output saved to: {filepath}")
+    return output
 
 
-# ---------------------------------------------------------------------------
-# Case runner
-# ---------------------------------------------------------------------------
+def _make_serializable(obj):
+    """Convert numpy types to Python native types for JSON serialization."""
+    import numpy as np
 
-def run_case(
-    *,
-    run_id: str,
-    case_id: str,
-    case_payload: Dict[str, Any],
-    method: str,
-    max_retry: int,
-    client: LLMClient,
-    prompts: PromptStore,
-    out_path: Path,
-) -> bool:
-    context: Dict[str, Any] = {}
-
-    # S0: initial context
-    s0 = case_payload.get("S0", {"text": "", "notes": []})
-    err = validate_evidence(s0, stage="S0")
-    if err:
-        log_step(out_path, run_id, case_id, "S0", 0, "evidence",
-                 {"source": "cases.json"}, json.dumps(s0, ensure_ascii=False), s0, f"schema_error:{err}")
-        return False
-
-    context["s0"] = s0
-    log_step(out_path, run_id, case_id, "S0", 0, "evidence",
-             {"source": "cases.json"}, json.dumps(s0, ensure_ascii=False), s0, "success")
-
-    prompt_profile = method
-    use_extended = method in ("rubric_only", "proposed")
-    use_supervisor = method in ("scaffold_only", "proposed")
-
-    run_stage = run_designer_with_supervisor if use_supervisor else run_designer_only
-
-    # S1
-    if not run_stage(
-        run_id=run_id, case_id=case_id, stage="S1",
-        prompt_profile=prompt_profile, max_retry=max_retry,
-        client=client, prompts=prompts, out_path=out_path, context=context,
-        extended=use_extended,
-    ):
-        return False
-
-    # S2
-    if not run_stage(
-        run_id=run_id, case_id=case_id, stage="S2",
-        prompt_profile=prompt_profile, max_retry=max_retry,
-        client=client, prompts=prompts, out_path=out_path, context=context,
-        extended=use_extended,
-    ):
-        return False
-
-    # S2-EVID
-    s2e = case_payload.get("S2_EVID", {"findings": []})
-    err = validate_evidence(s2e, stage="S2-EVID")
-    if err:
-        log_step(out_path, run_id, case_id, "S2-EVID", 0, "evidence",
-                 {"source": "cases.json"}, json.dumps(s2e, ensure_ascii=False), s2e, f"schema_error:{err}")
-        return False
-
-    context["s2_evidence"] = s2e
-    log_step(out_path, run_id, case_id, "S2-EVID", 0, "evidence",
-             {"source": "cases.json"}, json.dumps(s2e, ensure_ascii=False), s2e, "success")
-
-    # S3
-    if not run_stage(
-        run_id=run_id, case_id=case_id, stage="S3",
-        prompt_profile=prompt_profile, max_retry=max_retry,
-        client=client, prompts=prompts, out_path=out_path, context=context,
-        extended=use_extended,
-    ):
-        return False
-
-    return True
+    if isinstance(obj, dict):
+        return {k: _make_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_make_serializable(v) for v in obj]
+    elif isinstance(obj, (np.integer,)):
+        return int(obj)
+    elif isinstance(obj, (np.floating,)):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, (np.bool_,)):
+        return bool(obj)
+    return obj
 
 
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
+def main():
+    parser = argparse.ArgumentParser(
+        description="Run causal inference analysis experiments."
+    )
+    parser.add_argument(
+        "--case",
+        type=str,
+        default="castle",
+        help="Case ID (castle/close_elections/nhefs/nsw) or 'all'",
+    )
+    parser.add_argument(
+        "--condition",
+        type=str,
+        default="baseline",
+        help="Condition (baseline/proposed) or 'all'",
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="gpt-5.4-mini",
+        help="OpenAI model name",
+    )
+    parser.add_argument(
+        "--out",
+        type=str,
+        default="outputs",
+        help="Output directory",
+    )
+    args = parser.parse_args()
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="3-Layer Oversight Protocol Runner")
-    parser.add_argument("--case", default="all", help="Case ID or 'all'")
-    parser.add_argument("--max_retry", type=int, default=2)
-    parser.add_argument("--mock", action="store_true")
-    parser.add_argument("--method", choices=["baseline", "scaffold_only", "rubric_only", "proposed"], default="proposed")
-    parser.add_argument("--out", default=None, help="Output JSONL path")
-    parser.add_argument("--model", default="gpt-5.4-mini")
-    parser.add_argument("--rubric", action="store_true", help="Run Layer 2 rubric evaluation after completion")
-    return parser.parse_args()
-
-
-def main() -> None:
-    args = parse_args()
-
-    out_path = Path(args.out) if args.out else Path(f"outputs/run_{now_ts()}.jsonl")
-
-    with Path("cases.json").open("r", encoding="utf-8") as f:
-        cases = json.load(f)
-
+    # Resolve case list
     if args.case == "all":
-        case_ids = list(cases.keys())
+        case_ids = cases.list_cases()
     else:
         case_ids = [args.case]
 
-    client = LLMClient(mock=args.mock, model=args.model, temperature=0.0)
-    prompts = PromptStore("prompts")
+    # Resolve condition list
+    if args.condition == "all":
+        conditions = ["baseline", "proposed"]
+    else:
+        conditions = [args.condition]
 
-    success_count = 0
-    all_contexts: Dict[str, Dict[str, Any]] = {}
-
+    # Run all combinations
+    results = []
     for case_id in case_ids:
-        if case_id not in cases:
-            print(f"Case '{case_id}' not found in cases.json. Skipping.")
-            continue
-        run_id = str(uuid.uuid4())
+        for condition in conditions:
+            try:
+                result = run_single(case_id, condition, args.model, args.out)
+                results.append(result)
+            except Exception as e:
+                print(f"\nError running {case_id}/{condition}: {e}")
+                import traceback
+                traceback.print_exc()
 
-        # We need to capture context for rubric evaluation
-        context_holder: Dict[str, Any] = {}
-
-        # Patch run_case to capture context
-        case_payload = cases[case_id]
-        ok = run_case(
-            run_id=run_id,
-            case_id=case_id,
-            case_payload=case_payload,
-            method=args.method,
-            max_retry=max(0, args.max_retry),
-            client=client,
-            prompts=prompts,
-            out_path=out_path,
-        )
-
-        if ok:
-            success_count += 1
-
-            # Reconstruct context from output for rubric evaluation
-            if args.rubric:
-                ctx = _reconstruct_context(out_path, run_id)
-                all_contexts[case_id] = ctx
-
-    print(f"Done. success={success_count}/{len(case_ids)} out={out_path}")
-
-    # Layer 2: Rubric evaluation
-    if args.rubric and all_contexts:
-        print("\n" + "=" * 60)
-        print("Layer 2: Rubric Evaluation")
-        print("=" * 60)
-        for case_id, ctx in all_contexts.items():
-            print(f"\n### Case: {case_id}")
-            results = evaluate_full(ctx)
-            print(format_rubric_report(results))
-
-
-def _reconstruct_context(out_path: Path, run_id: str) -> Dict[str, Any]:
-    """Reconstruct context from JSONL output for rubric evaluation."""
-    context: Dict[str, Any] = {}
-    with out_path.open("r", encoding="utf-8") as f:
-        for line in f:
-            row = json.loads(line)
-            if row.get("run_id") != run_id:
-                continue
-            if row.get("status") != "success":
-                continue
-            parsed = row.get("parsed")
-            if not isinstance(parsed, dict):
-                continue
-            stage = row.get("stage", "")
-            role = row.get("role", "")
-            if stage == "S0" and role == "evidence":
-                context["s0"] = parsed
-            elif stage == "S1" and role == "designer":
-                context["S1"] = parsed
-            elif stage == "S2" and role == "designer":
-                context["S2"] = parsed
-            elif stage == "S3" and role == "designer":
-                context["S3"] = parsed
-    return context
+    print(f"\n{'='*60}")
+    print(f"Completed: {len(results)} / {len(case_ids) * len(conditions)} runs")
+    print(f"{'='*60}")
 
 
 if __name__ == "__main__":
